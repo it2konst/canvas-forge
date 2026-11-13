@@ -1,0 +1,15 @@
+@import '@fontsource-variable/onest';
+@import '@fontsource-variable/jetbrains-mono';
+
+:root {
+  --v-font-body: 'Onest Variable', system-ui, sans-serif;
+  --v-font-heading: 'Onest Variable', system-ui, sans-serif;
+  --cf-font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
