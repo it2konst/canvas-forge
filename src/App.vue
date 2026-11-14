@@ -1,22 +1,40 @@
 <script setup lang="ts">
-import { mdiBrush, mdiTranslate } from '@mdi/js'
-import { useThemeMode, useThemeSync } from '@/composables/useThemeMode'
-import { useLocale, useLocaleSync } from '@/composables/useLocale'
+import { useThemeSync } from '@/composables/useThemeMode'
+import { useLocaleSync } from '@/composables/useLocale'
+import { useToolShortcuts } from '@/composables/useToolShortcuts'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import StatusBar from '@/components/layout/StatusBar.vue'
+import ToolRail from '@/components/layout/ToolRail.vue'
+import CanvasViewport from '@/components/layout/CanvasViewport.vue'
+import PropertiesPanel from '@/components/panels/PropertiesPanel.vue'
 
 useThemeSync()
 useLocaleSync()
-const { icon, mode, cycle } = useThemeMode()
-const { locale } = useLocale()
-
-const toggleLocale = () => (locale.value = locale.value === 'en' ? 'ru' : 'en')
+useToolShortcuts()
 </script>
 
 <template>
   <v-app>
-    <v-main class="d-flex align-center justify-center ga-2 bg-workspace">
-      <v-btn :prepend-icon="mdiBrush" variant="tonal">{{ $t('app.name') }}</v-btn>
-      <v-btn :icon="icon" :aria-label="$t(`theme.${mode}`)" @click="cycle" />
-      <v-btn :prepend-icon="mdiTranslate" @click="toggleLocale">{{ locale }}</v-btn>
+    <!-- Order matters: header and status bar span the full width, panels fit between. -->
+    <AppHeader />
+    <StatusBar />
+    <ToolRail />
+    <PropertiesPanel />
+    <v-main class="app-main">
+      <div class="app-main__content">
+        <CanvasViewport />
+      </div>
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+/* The editor fills exactly one screen; only the canvas area scrolls or pans. */
+.app-main {
+  height: 100dvh;
+}
+.app-main__content {
+  position: relative;
+  height: 100%;
+}
+</style>

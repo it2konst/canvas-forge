@@ -1,0 +1,9 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useUiStore = defineStore('ui', () => {
+  /** Only matters on narrow screens, where the properties panel is a drawer. */
+  const propertiesOpen = ref(false)
+
+  return { propertiesOpen }
+})

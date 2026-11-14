@@ -1,0 +1,31 @@
+/**
+ * Every icon the app uses, in one place. Icons are SVG paths from @mdi/js,
+ * so only these end up in the bundle.
+ */
+export {
+  mdiBrush as iconBrush,
+  mdiCheck as iconCheck,
+  mdiDotsVertical as iconMore,
+  mdiEllipseOutline as iconEllipse,
+  mdiEraser as iconEraser,
+  mdiEyedropper as iconPicker,
+  mdiFilePlusOutline as iconNew,
+  mdiFolderOpenOutline as iconOpen,
+  mdiFormatColorFill as iconFill,
+  mdiFormatText as iconText,
+  mdiGithub as iconGithub,
+  mdiHandBackRightOutline as iconHand,
+  mdiLayersOutline as iconLayers,
+  mdiMagnifyMinusOutline as iconZoomOut,
+  mdiMagnifyPlusOutline as iconZoomIn,
+  mdiPencilOutline as iconPencil,
+  mdiRectangleOutline as iconRectangle,
+  mdiRedo as iconRedo,
+  mdiSelectDrag as iconSelect,
+  mdiSwapVertical as iconSwap,
+  mdiTranslate as iconLanguage,
+  mdiTrayArrowDown as iconSave,
+  mdiTuneVariant as iconProperties,
+  mdiUndo as iconUndo,
+  mdiVectorLine as iconLine,
+} from '@mdi/js'
