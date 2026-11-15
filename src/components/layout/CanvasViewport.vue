@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch, watchEffec
 import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
 import { useDisplay } from 'vuetify'
 import { useEditorStore } from '@/stores/editor'
+import { useCanvasInput } from '@/composables/useCanvasInput'
 
 const editor = useEditorStore()
 const { xs } = useDisplay()
@@ -69,13 +70,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(frame)
 })
 
-// Maps the pointer from screen pixels to image pixels, whatever the scale.
-function trackPointer(event: PointerEvent) {
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = Math.floor(((event.clientX - rect.left) / rect.width) * editor.canvasWidth)
-  const y = Math.floor(((event.clientY - rect.top) / rect.height) * editor.canvasHeight)
-  editor.pointer = { x, y }
-}
+useCanvasInput(screen)
 </script>
 
 <template>
@@ -86,8 +81,6 @@ function trackPointer(event: PointerEvent) {
       :style="{ width: `${cssWidth}px`, height: `${cssHeight}px` }"
       :aria-label="$t('canvas.label')"
       role="img"
-      @pointermove="trackPointer"
-      @pointerleave="editor.pointer = null"
     />
   </div>
 </template>
@@ -106,5 +99,7 @@ function trackPointer(event: PointerEvent) {
     0 0 0 1px rgba(0, 0, 0, 0.08),
     0 8px 24px -8px rgba(0, 0, 0, 0.25);
   cursor: crosshair;
+  /* The canvas handles every touch itself: no scrolling or zooming the page. */
+  touch-action: none;
 }
 </style>

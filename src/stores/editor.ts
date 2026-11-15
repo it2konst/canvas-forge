@@ -3,6 +3,8 @@ import { markRaw, ref } from 'vue'
 import type { ToolId } from '@/tools/catalog'
 import { Editor } from '@/engine/editor'
 import type { Point } from '@/engine/geometry'
+import type { PaintButton } from '@/engine/input'
+import type { StrokeSettings } from '@/engine/tools/types'
 
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
@@ -22,6 +24,14 @@ export const useEditorStore = defineStore('editor', () => {
   /** Pointer position in image pixels, or null when the pointer is off the canvas. */
   const pointer = ref<Point | null>(null)
 
+  /** Settings for a stroke made with the given mouse button. */
+  function strokeSettings(button: PaintButton): StrokeSettings {
+    return {
+      color: button === 'primary' ? primaryColor.value : secondaryColor.value,
+      size: brushSize.value,
+    }
+  }
+
   function swapColors() {
     ;[primaryColor.value, secondaryColor.value] = [secondaryColor.value, primaryColor.value]
   }
@@ -36,6 +46,7 @@ export const useEditorStore = defineStore('editor', () => {
     zoom,
     engine,
     pointer,
+    strokeSettings,
     swapColors,
   }
 })
