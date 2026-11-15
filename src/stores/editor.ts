@@ -24,10 +24,15 @@ export const useEditorStore = defineStore('editor', () => {
   /** Pointer position in image pixels, or null when the pointer is off the canvas. */
   const pointer = ref<Point | null>(null)
 
-  /** Settings for a stroke made with the given mouse button. */
+  /**
+   * Settings for a stroke with the active tool and the given mouse button.
+   * Left paints with colour 1 and right with colour 2; the eraser swaps them,
+   * so by default it paints with colour 2 (the background), like in Paint.
+   */
   function strokeSettings(button: PaintButton): StrokeSettings {
+    const usePrimary = (button === 'primary') !== (activeTool.value === 'eraser')
     return {
-      color: button === 'primary' ? primaryColor.value : secondaryColor.value,
+      color: usePrimary ? primaryColor.value : secondaryColor.value,
       size: brushSize.value,
     }
   }

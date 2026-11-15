@@ -57,7 +57,11 @@ export function attachPointerInput(
     if (!button) return
     event.preventDefault()
     activePointer = event.pointerId
-    element.setPointerCapture(event.pointerId)
+    try {
+      element.setPointerCapture(event.pointerId)
+    } catch {
+      // The pointer may already be gone; the stroke still works without capture.
+    }
     handlers.begin(toStrokePoint(event), button)
   }
 

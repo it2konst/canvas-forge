@@ -41,6 +41,7 @@ export default {
     line: 'Line',
     rectangle: 'Rectangle',
     ellipse: 'Ellipse',
+    unavailable: '{tool}: coming soon',
   },
   colors: {
     primary: 'Color 1',

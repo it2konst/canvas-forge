@@ -1,6 +1,7 @@
 import { useEventListener } from '@vueuse/core'
 import { TOOLS } from '@/tools/catalog'
 import { useEditorStore } from '@/stores/editor'
+import { isToolReady } from '@/tools/painters'
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -15,7 +16,7 @@ export function useToolShortcuts() {
     if (isTyping(event.target)) return
 
     const tool = TOOLS.find((t) => t.shortcut.toLowerCase() === event.key.toLowerCase())
-    if (tool) {
+    if (tool && isToolReady(tool.id)) {
       editor.activeTool = tool.id
       event.preventDefault()
     }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TOOL_GROUPS } from '@/tools/catalog'
 import { useEditorStore } from '@/stores/editor'
+import { isToolReady } from '@/tools/painters'
 
 const editor = useEditorStore()
 </script>
@@ -18,22 +19,29 @@ const editor = useEditorStore()
         <v-tooltip
           v-for="tool in group"
           :key="tool.id"
-          :text="`${$t(`tools.${tool.id}`)} (${tool.shortcut})`"
+          :text="
+            isToolReady(tool.id)
+              ? `${$t(`tools.${tool.id}`)} (${tool.shortcut})`
+              : $t('tools.unavailable', { tool: $t(`tools.${tool.id}`) })
+          "
           location="end"
         >
           <template #activator="{ props: tooltip }">
-            <v-btn
-              v-bind="tooltip"
-              :icon="tool.icon"
-              :aria-label="$t(`tools.${tool.id}`)"
-              :aria-pressed="editor.activeTool === tool.id"
-              :active="editor.activeTool === tool.id"
-              :color="editor.activeTool === tool.id ? 'primary' : undefined"
-              :variant="editor.activeTool === tool.id ? 'tonal' : 'text'"
-              rounded="lg"
-              size="small"
-              @click="editor.activeTool = tool.id"
-            />
+            <!-- The wrapper keeps the tooltip working on disabled tools. -->
+            <span v-bind="tooltip">
+              <v-btn
+                :icon="tool.icon"
+                :disabled="!isToolReady(tool.id)"
+                :aria-label="$t(`tools.${tool.id}`)"
+                :aria-pressed="editor.activeTool === tool.id"
+                :active="editor.activeTool === tool.id"
+                :color="editor.activeTool === tool.id ? 'primary' : undefined"
+                :variant="editor.activeTool === tool.id ? 'tonal' : 'text'"
+                rounded="lg"
+                size="small"
+                @click="editor.activeTool = tool.id"
+              />
+            </span>
           </template>
         </v-tooltip>
       </template>

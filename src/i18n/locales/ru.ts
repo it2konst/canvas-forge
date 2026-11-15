@@ -42,6 +42,7 @@ export default {
     line: 'Линия',
     rectangle: 'Прямоугольник',
     ellipse: 'Эллипс',
+    unavailable: '{tool}: появится позже',
   },
   colors: {
     primary: 'Цвет 1',
