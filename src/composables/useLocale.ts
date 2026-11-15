@@ -19,7 +19,7 @@ export function useLocaleSync() {
     (value) => {
       i18n.locale.value = value
       document.documentElement.lang = value
-      document.title = `${i18n.t('app.name')} — ${i18n.t('app.tagline')}`
+      document.title = `${i18n.t('app.name')} | ${i18n.t('app.tagline')}`
     },
     { immediate: true },
   )

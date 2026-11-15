@@ -5,7 +5,7 @@ import { useEditorStore } from '@/stores/editor'
 const editor = useEditorStore()
 
 const position = computed(() =>
-  editor.pointer ? `${editor.pointer.x}, ${editor.pointer.y} px` : '—',
+  editor.pointer ? `${editor.pointer.x}, ${editor.pointer.y} px` : '-',
 )
 const size = computed(() => `${editor.canvasWidth} × ${editor.canvasHeight} px`)
 const zoom = computed(() => `${Math.round(editor.zoom * 100)}%`)
