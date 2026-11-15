@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useThemeSync } from '@/composables/useThemeMode'
 import { useLocaleSync } from '@/composables/useLocale'
-import { useToolShortcuts } from '@/composables/useToolShortcuts'
+import { useShortcuts } from '@/composables/useShortcuts'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import StatusBar from '@/components/layout/StatusBar.vue'
 import ToolRail from '@/components/layout/ToolRail.vue'
@@ -10,7 +10,7 @@ import PropertiesPanel from '@/components/panels/PropertiesPanel.vue'
 
 useThemeSync()
 useLocaleSync()
-useToolShortcuts()
+useShortcuts()
 </script>
 
 <template>

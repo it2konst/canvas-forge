@@ -21,6 +21,16 @@ export const useEditorStore = defineStore('editor', () => {
   // markRaw: the engine owns canvases and must not be made reactive.
   const engine = markRaw(new Editor(canvasWidth.value, canvasHeight.value))
 
+  const canUndo = ref(false)
+  const canRedo = ref(false)
+  engine.onHistoryChange(() => {
+    canUndo.value = engine.canUndo
+    canRedo.value = engine.canRedo
+  })
+
+  const undo = () => engine.undo()
+  const redo = () => engine.redo()
+
   /** Pointer position in image pixels, or null when the pointer is off the canvas. */
   const pointer = ref<Point | null>(null)
 
@@ -50,6 +60,10 @@ export const useEditorStore = defineStore('editor', () => {
     canvasHeight,
     zoom,
     engine,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     pointer,
     strokeSettings,
     swapColors,

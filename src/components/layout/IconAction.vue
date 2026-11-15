@@ -6,6 +6,8 @@ defineProps<{
   shortcut?: string
   disabled?: boolean
 }>()
+
+defineEmits<{ click: [event: MouseEvent] }>()
 </script>
 
 <template>
@@ -13,7 +15,13 @@ defineProps<{
     <template #activator="{ props: tooltip }">
       <!-- The wrapper keeps the tooltip working while the button is disabled. -->
       <span v-bind="tooltip">
-        <v-btn :icon="icon" :aria-label="label" :disabled="disabled" size="small" />
+        <v-btn
+          :icon="icon"
+          :aria-label="label"
+          :disabled="disabled"
+          size="small"
+          @click="$emit('click', $event)"
+        />
       </span>
     </template>
   </v-tooltip>
