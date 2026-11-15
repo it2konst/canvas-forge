@@ -4,6 +4,7 @@ import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
 import { useDisplay } from 'vuetify'
 import { useEditorStore } from '@/stores/editor'
 import { useCanvasInput } from '@/composables/useCanvasInput'
+import BrushCursor from './BrushCursor.vue'
 
 const editor = useEditorStore()
 const { xs } = useDisplay()
@@ -11,6 +12,7 @@ const { pixelRatio } = useDevicePixelRatio()
 
 const viewport = useTemplateRef('viewport')
 const screen = useTemplateRef('screen')
+const brushCursor = useTemplateRef('brushCursor')
 const { width, height } = useElementSize(viewport)
 
 const padding = computed(() => (xs.value ? 12 : 32))
@@ -75,13 +77,16 @@ useCanvasInput(screen)
 
 <template>
   <div ref="viewport" class="viewport bg-workspace">
-    <canvas
-      ref="screen"
-      class="screen"
-      :style="{ width: `${cssWidth}px`, height: `${cssHeight}px` }"
-      :aria-label="$t('canvas.label')"
-      role="img"
-    />
+    <div class="stage" :style="{ width: `${cssWidth}px`, height: `${cssHeight}px` }">
+      <canvas
+        ref="screen"
+        class="screen"
+        :class="{ 'screen--outline-cursor': brushCursor?.visible }"
+        :aria-label="$t('canvas.label')"
+        role="img"
+      />
+      <BrushCursor ref="brushCursor" />
+    </div>
   </div>
 </template>
 
@@ -93,13 +98,23 @@ useCanvasInput(screen)
   place-items: center;
   overflow: hidden;
 }
-.screen {
-  display: block;
+.stage {
+  position: relative;
+  /* Keeps the brush outline from spilling over the panels. */
+  overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.08),
     0 8px 24px -8px rgba(0, 0, 0, 0.25);
+}
+.screen {
+  display: block;
+  width: 100%;
+  height: 100%;
   cursor: crosshair;
   /* The canvas handles every touch itself: no scrolling or zooming the page. */
   touch-action: none;
+}
+.screen--outline-cursor {
+  cursor: none;
 }
 </style>
