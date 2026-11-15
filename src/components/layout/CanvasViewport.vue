@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, watchEffect } from 'vue'
-import { useElementSize } from '@vueuse/core'
+import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch, watchEffect } from 'vue'
+import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
 import { useDisplay } from 'vuetify'
 import { useEditorStore } from '@/stores/editor'
 
 const editor = useEditorStore()
 const { xs } = useDisplay()
+const { pixelRatio } = useDevicePixelRatio()
 
 const viewport = useTemplateRef('viewport')
+const screen = useTemplateRef('screen')
 const { width, height } = useElementSize(viewport)
 
 const padding = computed(() => (xs.value ? 12 : 32))
 
 // Fit the whole image on screen, never upscale past 100%.
-// Manual zoom and panning replace this in the drawing stage.
+// Manual zoom and panning replace this in a later stage.
 const fitScale = computed(() => {
   const w = width.value - padding.value * 2
   const h = height.value - padding.value * 2
@@ -23,10 +25,49 @@ const fitScale = computed(() => {
 
 watchEffect(() => (editor.zoom = fitScale.value))
 
-const sheetStyle = computed(() => ({
-  width: `${Math.round(editor.canvasWidth * fitScale.value)}px`,
-  height: `${Math.round(editor.canvasHeight * fitScale.value)}px`,
-}))
+const cssWidth = computed(() => Math.round(editor.canvasWidth * fitScale.value))
+const cssHeight = computed(() => Math.round(editor.canvasHeight * fitScale.value))
+
+// --- Painting the document onto the visible canvas ------------------------
+
+let frame = 0
+
+function paint() {
+  frame = 0
+  const canvas = screen.value
+  const ctx = canvas?.getContext('2d')
+  if (!canvas || !ctx) return
+  const { doc } = editor.engine
+  // Downscaled views look better smoothed; at 1:1 and above keep pixels crisp.
+  ctx.imageSmoothingEnabled = canvas.width < doc.width
+  ctx.imageSmoothingQuality = 'high'
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(doc.canvas, 0, 0, canvas.width, canvas.height)
+}
+
+/** Coalesces any number of repaint requests into one per animation frame. */
+function schedulePaint() {
+  if (!frame) frame = requestAnimationFrame(paint)
+}
+
+// The backing store matches physical pixels, so the image stays sharp on HiDPI screens.
+watch(
+  [cssWidth, cssHeight, pixelRatio, screen],
+  ([w, h, dpr, canvas]) => {
+    if (!canvas) return
+    canvas.width = Math.max(1, Math.round(w * dpr))
+    canvas.height = Math.max(1, Math.round(h * dpr))
+    schedulePaint()
+  },
+  { immediate: true },
+)
+
+let stopRender: (() => void) | undefined
+onMounted(() => (stopRender = editor.engine.onRender(schedulePaint)))
+onBeforeUnmount(() => {
+  stopRender?.()
+  cancelAnimationFrame(frame)
+})
 
 // Maps the pointer from screen pixels to image pixels, whatever the scale.
 function trackPointer(event: PointerEvent) {
@@ -39,10 +80,10 @@ function trackPointer(event: PointerEvent) {
 
 <template>
   <div ref="viewport" class="viewport bg-workspace">
-    <!-- Placeholder sheet; the real <canvas> stack replaces it in the drawing stage. -->
-    <div
-      class="sheet"
-      :style="sheetStyle"
+    <canvas
+      ref="screen"
+      class="screen"
+      :style="{ width: `${cssWidth}px`, height: `${cssHeight}px` }"
       :aria-label="$t('canvas.label')"
       role="img"
       @pointermove="trackPointer"
@@ -59,9 +100,8 @@ function trackPointer(event: PointerEvent) {
   place-items: center;
   overflow: hidden;
 }
-.sheet {
-  /* The image itself is white paper in both themes, like in any editor. */
-  background: #ffffff;
+.screen {
+  display: block;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.08),
     0 8px 24px -8px rgba(0, 0, 0, 0.25);

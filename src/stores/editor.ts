@@ -1,13 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { markRaw, ref } from 'vue'
 import type { ToolId } from '@/tools/catalog'
+import { Editor } from '@/engine/editor'
+import type { Point } from '@/engine/geometry'
 
-export interface Point {
-  x: number
-  y: number
-}
-
-/** Editor state shared by the panels. The drawing engine plugs in here later. */
+/** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
   const activeTool = ref<ToolId>('brush')
 
@@ -18,6 +15,9 @@ export const useEditorStore = defineStore('editor', () => {
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
   const zoom = ref(1)
+
+  // markRaw: the engine owns canvases and must not be made reactive.
+  const engine = markRaw(new Editor(canvasWidth.value, canvasHeight.value))
 
   /** Pointer position in image pixels, or null when the pointer is off the canvas. */
   const pointer = ref<Point | null>(null)
@@ -34,6 +34,7 @@ export const useEditorStore = defineStore('editor', () => {
     canvasWidth,
     canvasHeight,
     zoom,
+    engine,
     pointer,
     swapColors,
   }
