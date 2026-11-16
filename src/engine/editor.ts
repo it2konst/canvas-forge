@@ -4,6 +4,7 @@ import { floodFill } from './fill'
 import { clampRect, unionRect, type Point, type Rect } from './geometry'
 import { History, type HistoryEntry } from './history'
 import type { StrokePoint } from './input'
+import { drawText, fontShorthand, type TextStyle } from './tools/text'
 import type { Stroke, StrokeEnv, StrokeFactory, StrokeSettings } from './tools/types'
 
 type Listener = () => void
@@ -141,6 +142,19 @@ export class Editor {
     this.record(area)
     this.requestRender()
     return area
+  }
+
+  /**
+   * Draws text as one undoable step. Waits for the font so the first use of
+   * a web font does not fall back to a system one.
+   */
+  async addText(at: Point, text: string, style: TextStyle): Promise<Rect | null> {
+    try {
+      await document.fonts.load(fontShorthand(style), text)
+    } catch {
+      // Draw with whatever is available rather than lose the text.
+    }
+    return this.edit((ctx) => drawText(ctx, at, text, style))
   }
 
   /**

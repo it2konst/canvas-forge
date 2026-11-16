@@ -19,7 +19,7 @@ export const strokeFactoryFor = (tool: ToolId): StrokeFactory<ShapeSettings> | u
   PAINTERS[tool]
 
 /** Tools that act on a click rather than a drag. */
-const CLICK_TOOLS: ReadonlySet<ToolId> = new Set<ToolId>(['fill', 'picker'])
+const CLICK_TOOLS: ReadonlySet<ToolId> = new Set<ToolId>(['fill', 'picker', 'text'])
 
 /** Tools that already work. The rest are shown, but disabled until they land. */
 export const isToolReady = (tool: ToolId): boolean => tool in PAINTERS || CLICK_TOOLS.has(tool)

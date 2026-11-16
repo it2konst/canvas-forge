@@ -5,6 +5,7 @@ import { Editor } from '@/engine/editor'
 import type { Point } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
 import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
+import { fontById, type FontId } from '@/tools/fonts'
 
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
@@ -21,6 +22,11 @@ export const useEditorStore = defineStore('editor', () => {
   const shapeStyle = ref<ShapeStyle>('outline')
   /** 0..100; a little tolerance makes fills cover anti-aliased edges. */
   const fillTolerance = ref(10)
+  const fontSize = ref(32)
+  const fontId = ref<FontId>('sans')
+
+  /** Text being typed: where it starts and which button opened it. */
+  const textDraft = ref<{ at: Point; button: PaintButton; text: string } | null>(null)
 
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
@@ -66,6 +72,30 @@ export const useEditorStore = defineStore('editor', () => {
   const fillAt = (point: Point, button: PaintButton) =>
     engine.fill(point, colorFor(button), fillTolerance.value)
 
+  function openText(at: Point, button: PaintButton) {
+    textDraft.value = { at: { x: Math.floor(at.x), y: Math.floor(at.y) }, button, text: '' }
+  }
+
+  /** Draws the text being typed onto the image, if there is any, and closes the editor. */
+  async function commitText() {
+    const draft = textDraft.value
+    if (!draft) return
+    textDraft.value = null
+    if (!draft.text.trim()) return
+    await engine.addText(draft.at, draft.text, {
+      family: fontById(fontId.value).family,
+      size: fontSize.value,
+      color: colorFor(draft.button),
+    })
+  }
+
+  const cancelText = () => (textDraft.value = null)
+
+  // Switching tools keeps what was typed, like clicking away does.
+  watch(activeTool, (tool) => {
+    if (tool !== 'text') void commitText()
+  })
+
   function setColor(button: PaintButton, color: string) {
     if (button === 'primary') primaryColor.value = color
     else secondaryColor.value = color
@@ -82,6 +112,9 @@ export const useEditorStore = defineStore('editor', () => {
     brushSize,
     shapeStyle,
     fillTolerance,
+    fontSize,
+    fontId,
+    textDraft,
     canvasWidth,
     canvasHeight,
     zoom,
@@ -94,6 +127,10 @@ export const useEditorStore = defineStore('editor', () => {
     strokeSettings,
     fillAt,
     previousTool,
+    colorFor,
+    openText,
+    commitText,
+    cancelText,
     setColor,
     swapColors,
   }

@@ -5,6 +5,7 @@ import { useDisplay } from 'vuetify'
 import { useEditorStore } from '@/stores/editor'
 import { useCanvasInput } from '@/composables/useCanvasInput'
 import BrushCursor from './BrushCursor.vue'
+import TextBox from './TextBox.vue'
 
 const editor = useEditorStore()
 const { xs } = useDisplay()
@@ -81,11 +82,15 @@ useCanvasInput(screen)
       <canvas
         ref="screen"
         class="screen"
-        :class="{ 'screen--outline-cursor': brushCursor?.visible }"
+        :class="{
+          'screen--outline-cursor': brushCursor?.visible,
+          'screen--text-cursor': editor.activeTool === 'text',
+        }"
         :aria-label="$t('canvas.label')"
         role="img"
       />
       <BrushCursor ref="brushCursor" />
+      <TextBox v-if="editor.textDraft" />
     </div>
   </div>
 </template>
@@ -116,5 +121,8 @@ useCanvasInput(screen)
 }
 .screen--outline-cursor {
   cursor: none;
+}
+.screen--text-cursor {
+  cursor: text;
 }
 </style>

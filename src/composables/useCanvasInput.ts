@@ -42,6 +42,12 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
             pick(point)
             return
           }
+          if (editor.activeTool === 'text') {
+            // A click outside the open text box finishes it, like in Paint.
+            if (editor.textDraft) void editor.commitText()
+            else editor.openText(point, button)
+            return
+          }
           if (editor.activeTool === 'fill') {
             editor.fillAt(point, button)
             return
