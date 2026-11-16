@@ -11,6 +11,7 @@ export default mergeConfig(
       include: ['src/**/*.test.ts'],
       coverage: {
         include: ['src/engine/**'],
+        exclude: ['src/**/__tests__/**'],
         reporter: ['text', 'html'],
       },
     },

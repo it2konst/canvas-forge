@@ -4,6 +4,7 @@
  */
 export function createMockContext() {
   const calls: { name: string; args: number[]; style: string; lineWidth: number }[] = []
+  const texts: { text: string; x: number; y: number }[] = []
   const ctx = {
     fillStyle: '' as string,
     strokeStyle: '' as string,
@@ -12,7 +13,11 @@ export function createMockContext() {
     lineJoin: 'miter',
     globalAlpha: 1,
     globalCompositeOperation: 'source-over',
+    font: '',
+    textAlign: 'start',
+    textBaseline: 'alphabetic',
     calls,
+    texts,
   }
   const record =
     (name: string, styleKey: 'fillStyle' | 'strokeStyle') =>
@@ -27,6 +32,15 @@ export function createMockContext() {
     moveTo: () => {},
     lineTo: () => {},
     quadraticCurveTo: () => {},
+    ellipse: () => {},
+    strokeRect: record('strokeRect', 'strokeStyle'),
+    fillText: (text: string, x: number, y: number) => texts.push({ text, x, y }),
+    // 10 px per character, with typical font metrics for a 20 px font.
+    measureText: (text: string) => ({
+      width: text.length * 10,
+      fontBoundingBoxAscent: 18,
+      fontBoundingBoxDescent: 5,
+    }),
   })
 }
 
