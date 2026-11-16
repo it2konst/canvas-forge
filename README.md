@@ -4,6 +4,8 @@
 
 [![CI](https://github.com/it2konst/canvas-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/it2konst/canvas-forge/actions/workflows/ci.yml)
 
+**Live demo: [canvas-forge-beta.vercel.app](https://canvas-forge-beta.vercel.app)**
+
 A Paint-style image editor that runs entirely in the browser. Familiar tools, a classic palette and the shortcuts you expect, in a calm interface that works by day and by night. Images stay on your device and are never uploaded anywhere.
 
 Written from scratch with Vue 3 and TypeScript.

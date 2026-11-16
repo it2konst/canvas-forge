@@ -4,6 +4,8 @@
 
 [![CI](https://github.com/it2konst/canvas-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/it2konst/canvas-forge/actions/workflows/ci.yml)
 
+**Демо: [canvas-forge-beta.vercel.app](https://canvas-forge-beta.vercel.app)**
+
 Графический редактор в духе Paint, который работает прямо в браузере. Привычные инструменты, классическая палитра и знакомые горячие клавиши в спокойном интерфейсе, в котором удобно и днём, и ночью. Изображения остаются на вашем устройстве и никуда не загружаются.
 
 Написан с нуля на Vue 3 и TypeScript.
