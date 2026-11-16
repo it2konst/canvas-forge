@@ -51,6 +51,9 @@ export default {
   },
   options: {
     size: 'Size',
+    tolerance: 'Tolerance',
+    toleranceHint:
+      'How similar a color must be to the clicked one to be filled. Raise it to cover soft edges.',
     shapeStyle: 'Style',
     style: {
       outline: 'Outline',

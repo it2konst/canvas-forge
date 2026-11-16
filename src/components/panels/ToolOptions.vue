@@ -28,6 +28,24 @@ const isShape = computed(() => ['line', 'rectangle', 'ellipse'].includes(tool.va
       </template>
     </v-slider>
 
+    <template v-if="has('tolerance')">
+      <v-slider
+        v-model="editor.fillTolerance"
+        :min="0"
+        :max="100"
+        :step="1"
+        :label="$t('options.tolerance')"
+        color="primary"
+        density="compact"
+        hide-details
+      >
+        <template #append>
+          <span class="value">{{ editor.fillTolerance }}%</span>
+        </template>
+      </v-slider>
+      <p class="hint">{{ $t('options.toleranceHint') }}</p>
+    </template>
+
     <template v-if="has('shapeStyle')">
       <div class="label">{{ $t('options.shapeStyle') }}</div>
       <ShapeStylePicker />

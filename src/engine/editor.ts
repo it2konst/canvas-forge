@@ -1,5 +1,7 @@
+import { parseHex } from './color'
 import { RasterDocument } from './document'
-import { clampRect, unionRect, type Rect } from './geometry'
+import { floodFill } from './fill'
+import { clampRect, unionRect, type Point, type Rect } from './geometry'
 import { History, type HistoryEntry } from './history'
 import type { StrokePoint } from './input'
 import type { Stroke, StrokeEnv, StrokeFactory, StrokeSettings } from './tools/types'
@@ -119,6 +121,25 @@ export class Editor {
       this.record(area)
       this.requestRender()
     }
+    return area
+  }
+
+  /** Flood-fills the area around a point; see floodFill for tolerance. */
+  fill(point: Point, color: string, tolerance: number): Rect | null {
+    if (this.stroke) return null
+    const image = this.readImage()
+    const area = floodFill(
+      image,
+      Math.floor(point.x),
+      Math.floor(point.y),
+      parseHex(color),
+      tolerance,
+    )
+    if (!area) return null
+    // Only the changed area goes back to the GPU.
+    this.doc.ctx.putImageData(image, 0, 0, area.x, area.y, area.width, area.height)
+    this.record(area)
+    this.requestRender()
     return area
   }
 

@@ -52,6 +52,9 @@ export default {
   },
   options: {
     size: 'Размер',
+    tolerance: 'Допуск',
+    toleranceHint:
+      'Насколько цвет может отличаться от того, по которому кликнули. Увеличьте, чтобы закрасить мягкие края.',
     shapeStyle: 'Стиль',
     style: {
       outline: 'Контур',

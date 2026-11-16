@@ -14,6 +14,8 @@ export const useEditorStore = defineStore('editor', () => {
   const secondaryColor = ref('#FFFFFF')
   const brushSize = ref(8)
   const shapeStyle = ref<ShapeStyle>('outline')
+  /** 0..100; a little tolerance makes fills cover anti-aliased edges. */
+  const fillTolerance = ref(10)
 
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
@@ -53,6 +55,12 @@ export const useEditorStore = defineStore('editor', () => {
     }
   }
 
+  const colorFor = (button: PaintButton) =>
+    button === 'primary' ? primaryColor.value : secondaryColor.value
+
+  const fillAt = (point: Point, button: PaintButton) =>
+    engine.fill(point, colorFor(button), fillTolerance.value)
+
   function swapColors() {
     ;[primaryColor.value, secondaryColor.value] = [secondaryColor.value, primaryColor.value]
   }
@@ -63,6 +71,7 @@ export const useEditorStore = defineStore('editor', () => {
     secondaryColor,
     brushSize,
     shapeStyle,
+    fillTolerance,
     canvasWidth,
     canvasHeight,
     zoom,
@@ -73,6 +82,7 @@ export const useEditorStore = defineStore('editor', () => {
     redo,
     pointer,
     strokeSettings,
+    fillAt,
     swapColors,
   }
 })

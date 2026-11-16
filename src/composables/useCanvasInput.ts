@@ -25,6 +25,10 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
       if (!element) return
       detach = attachPointerInput(element, toImage, {
         begin(point, button) {
+          if (editor.activeTool === 'fill') {
+            editor.fillAt(point, button)
+            return
+          }
           const tool = strokeFactoryFor(editor.activeTool)
           if (!tool) return
           editor.engine.beginStroke(tool, editor.strokeSettings(button), point)

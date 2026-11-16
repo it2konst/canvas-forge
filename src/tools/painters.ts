@@ -18,8 +18,11 @@ const PAINTERS: Partial<Record<ToolId, StrokeFactory<ShapeSettings>>> = {
 export const strokeFactoryFor = (tool: ToolId): StrokeFactory<ShapeSettings> | undefined =>
   PAINTERS[tool]
 
+/** Tools that act on a click rather than a drag. */
+const CLICK_TOOLS: ReadonlySet<ToolId> = new Set<ToolId>(['fill'])
+
 /** Tools that already work. The rest are shown, but disabled until they land. */
-export const isToolReady = (tool: ToolId): boolean => tool in PAINTERS
+export const isToolReady = (tool: ToolId): boolean => tool in PAINTERS || CLICK_TOOLS.has(tool)
 
 /** Tools whose cursor shows their size as an outline. */
 export const hasSizeCursor = (tool: ToolId): boolean =>
