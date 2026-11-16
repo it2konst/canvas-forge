@@ -1,12 +1,6 @@
 import type { RGBA } from './color'
 import type { Rect } from './geometry'
-
-/** The parts of ImageData the fill needs; plain objects work in tests. */
-export interface PixelBuffer {
-  readonly width: number
-  readonly height: number
-  readonly data: Uint8ClampedArray
-}
+import type { PixelBuffer } from './pixels'
 
 /**
  * Paint-style flood fill: recolours the contiguous area around (x, y) whose

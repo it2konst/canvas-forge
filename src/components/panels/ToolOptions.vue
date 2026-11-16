@@ -51,6 +51,8 @@ const isShape = computed(() => ['line', 'rectangle', 'ellipse'].includes(tool.va
       <ShapeStylePicker />
     </template>
 
+    <p v-if="has('pickerHint')" class="hint">{{ $t('options.pickerHint') }}</p>
+
     <p v-if="isShape" class="hint">{{ $t(`options.shiftHint.${tool.id}`) }}</p>
 
     <p v-if="!tool.options.length" class="hint">{{ $t('panels.comingSoon') }}</p>

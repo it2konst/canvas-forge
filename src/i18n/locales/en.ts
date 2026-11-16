@@ -54,6 +54,8 @@ export default {
     tolerance: 'Tolerance',
     toleranceHint:
       'How similar a color must be to the clicked one to be filled. Raise it to cover soft edges.',
+    pickerHint:
+      'Click or drag over the image to take color 1, right-click for color 2. Then the previous tool comes back.',
     shapeStyle: 'Style',
     style: {
       outline: 'Outline',

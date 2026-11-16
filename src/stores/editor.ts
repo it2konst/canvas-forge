@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { markRaw, ref } from 'vue'
+import { markRaw, ref, watch } from 'vue'
 import type { ToolId } from '@/tools/catalog'
 import { Editor } from '@/engine/editor'
 import type { Point } from '@/engine/geometry'
@@ -9,6 +9,11 @@ import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
   const activeTool = ref<ToolId>('brush')
+  /** The tool to return to after the colour picker, like in Paint. */
+  const previousTool = ref<ToolId>('brush')
+  watch(activeTool, (next, prev) => {
+    if (next === 'picker' && prev !== 'picker') previousTool.value = prev
+  })
 
   const primaryColor = ref('#000000')
   const secondaryColor = ref('#FFFFFF')
@@ -61,6 +66,11 @@ export const useEditorStore = defineStore('editor', () => {
   const fillAt = (point: Point, button: PaintButton) =>
     engine.fill(point, colorFor(button), fillTolerance.value)
 
+  function setColor(button: PaintButton, color: string) {
+    if (button === 'primary') primaryColor.value = color
+    else secondaryColor.value = color
+  }
+
   function swapColors() {
     ;[primaryColor.value, secondaryColor.value] = [secondaryColor.value, primaryColor.value]
   }
@@ -83,6 +93,8 @@ export const useEditorStore = defineStore('editor', () => {
     pointer,
     strokeSettings,
     fillAt,
+    previousTool,
+    setColor,
     swapColors,
   }
 })
