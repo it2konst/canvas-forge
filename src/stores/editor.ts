@@ -4,7 +4,7 @@ import type { ToolId } from '@/tools/catalog'
 import { Editor } from '@/engine/editor'
 import type { Point } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
-import type { StrokeSettings } from '@/engine/tools/types'
+import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
 
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
@@ -13,6 +13,7 @@ export const useEditorStore = defineStore('editor', () => {
   const primaryColor = ref('#000000')
   const secondaryColor = ref('#FFFFFF')
   const brushSize = ref(8)
+  const shapeStyle = ref<ShapeStyle>('outline')
 
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
@@ -39,11 +40,16 @@ export const useEditorStore = defineStore('editor', () => {
    * Left paints with colour 1 and right with colour 2; the eraser swaps them,
    * so by default it paints with colour 2 (the background), like in Paint.
    */
-  function strokeSettings(button: PaintButton): StrokeSettings {
+  function strokeSettings(button: PaintButton): ShapeSettings {
     const usePrimary = (button === 'primary') !== (activeTool.value === 'eraser')
+    const color = usePrimary ? primaryColor.value : secondaryColor.value
+    const other = usePrimary ? secondaryColor.value : primaryColor.value
     return {
-      color: usePrimary ? primaryColor.value : secondaryColor.value,
+      color,
       size: brushSize.value,
+      style: shapeStyle.value,
+      // A filled shape uses the stroke colour; outline + fill fills with the other one.
+      fillColor: shapeStyle.value === 'both' ? other : color,
     }
   }
 
@@ -56,6 +62,7 @@ export const useEditorStore = defineStore('editor', () => {
     primaryColor,
     secondaryColor,
     brushSize,
+    shapeStyle,
     canvasWidth,
     canvasHeight,
     zoom,

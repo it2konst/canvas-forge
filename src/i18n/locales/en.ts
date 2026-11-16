@@ -25,7 +25,6 @@ export default {
     tools: 'Tools',
     properties: 'Properties',
     colors: 'Colors',
-    brush: 'Brush',
     layers: 'Layers',
     comingSoon: 'Coming in a later version.',
   },
@@ -50,8 +49,19 @@ export default {
     palette: 'Palette',
     hint: 'Click for color 1, right-click for color 2.',
   },
-  brush: {
+  options: {
     size: 'Size',
+    shapeStyle: 'Style',
+    style: {
+      outline: 'Outline',
+      fill: 'Filled',
+      both: 'Outline and fill with color 2',
+    },
+    shiftHint: {
+      line: 'Hold Shift to snap the angle to 45°.',
+      rectangle: 'Hold Shift to draw a square.',
+      ellipse: 'Hold Shift to draw a circle.',
+    },
   },
   canvas: {
     label: 'Image',

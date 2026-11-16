@@ -26,7 +26,6 @@ export default {
     tools: 'Инструменты',
     properties: 'Свойства',
     colors: 'Цвета',
-    brush: 'Кисть',
     layers: 'Слои',
     comingSoon: 'Появится в одной из следующих версий.',
   },
@@ -51,8 +50,19 @@ export default {
     palette: 'Палитра',
     hint: 'Клик выбирает цвет 1, правый клик выбирает цвет 2.',
   },
-  brush: {
+  options: {
     size: 'Размер',
+    shapeStyle: 'Стиль',
+    style: {
+      outline: 'Контур',
+      fill: 'Заливка',
+      both: 'Контур и заливка цветом 2',
+    },
+    shiftHint: {
+      line: 'Удерживайте Shift, чтобы угол шёл с шагом 45°.',
+      rectangle: 'Удерживайте Shift, чтобы нарисовать квадрат.',
+      ellipse: 'Удерживайте Shift, чтобы нарисовать круг.',
+    },
   },
   canvas: {
     label: 'Изображение',

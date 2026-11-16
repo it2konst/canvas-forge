@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEditorStore } from '@/stores/editor'
-import { isToolReady } from '@/tools/painters'
+import { hasSizeCursor } from '@/tools/painters'
 
 /** Below this on-screen size an outline is useless; the crosshair takes over. */
 const MIN_VISIBLE_PX = 5
@@ -12,7 +12,7 @@ const shape = computed(() => (editor.activeTool === 'brush' ? 'circle' : 'square
 
 const style = computed(() => {
   const p = editor.pointer
-  if (!p || !isToolReady(editor.activeTool)) return null
+  if (!p || !hasSizeCursor(editor.activeTool)) return null
 
   const scale = editor.zoom
   const size = Math.max(1, Math.round(editor.brushSize))

@@ -3,6 +3,8 @@ import type { Point } from './geometry'
 export interface StrokePoint extends Point {
   /** 0..1. Mouse and touch report full pressure; only pens vary it. */
   pressure: number
+  /** Shift was held: shapes keep their proportions or snap their angle. */
+  shift?: boolean
 }
 
 /** Left button paints with colour 1, right button with colour 2, like in Paint. */
@@ -49,6 +51,7 @@ export function attachPointerInput(
   const toStrokePoint = (event: PointerEvent): StrokePoint => ({
     ...toImage(event.clientX, event.clientY),
     pressure: pressureOf(event),
+    shift: event.shiftKey,
   })
 
   function onDown(event: PointerEvent) {
