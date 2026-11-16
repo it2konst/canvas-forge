@@ -14,5 +14,18 @@ export interface Stroke {
   finish(): Rect | null
 }
 
+/** What the engine offers a stroke besides the canvas. */
+export interface StrokeEnv {
+  /**
+   * Puts back the pixels the area had when the stroke began. Tools with a
+   * live preview (shapes) use it to erase the previous preview frame.
+   */
+  restore(rect: Rect): void
+}
+
 /** A painting tool: starts a new stroke on the given context. */
-export type StrokeFactory = (ctx: CanvasRenderingContext2D, settings: StrokeSettings) => Stroke
+export type StrokeFactory<S extends StrokeSettings = StrokeSettings> = (
+  ctx: CanvasRenderingContext2D,
+  settings: S,
+  env: StrokeEnv,
+) => Stroke

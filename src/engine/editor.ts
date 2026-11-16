@@ -2,7 +2,7 @@ import { RasterDocument } from './document'
 import { clampRect, unionRect, type Rect } from './geometry'
 import { History, type HistoryEntry } from './history'
 import type { StrokePoint } from './input'
-import type { Stroke, StrokeFactory, StrokeSettings } from './tools/types'
+import type { Stroke, StrokeEnv, StrokeFactory, StrokeSettings } from './tools/types'
 
 type Listener = () => void
 
@@ -21,6 +21,9 @@ const HISTORY_LIMITS = {
 /**
  * The drawing engine behind the UI. Plain TypeScript, no Vue: the store
  * holds one instance and mirrors the few flags the interface needs.
+ *
+ * Every change follows the same pattern: copy the image to the snapshot,
+ * draw on the document, then record the touched area before and after.
  */
 export class Editor {
   doc: RasterDocument
@@ -32,11 +35,12 @@ export class Editor {
   /** Everything the current stroke has touched, in image pixels. */
   private strokeArea: Rect | null = null
   /**
-   * Copy of the image taken when a stroke starts. Copying the canvas is a
-   * fast GPU operation; only the area the stroke touched is read back later.
+   * Copy of the image taken before each change. Copying the canvas is a fast
+   * GPU operation; only the area that changed is read back afterwards.
    */
   private readonly snapshot: HTMLCanvasElement
   private readonly snapshotCtx: CanvasRenderingContext2D
+  private readonly strokeEnv: StrokeEnv = { restore: (rect) => this.restore(rect) }
 
   constructor(width: number, height: number) {
     this.doc = new RasterDocument(width, height)
@@ -61,11 +65,14 @@ export class Editor {
 
   // --- Strokes -----------------------------------------------------------
 
-  beginStroke(tool: StrokeFactory, settings: StrokeSettings, point: StrokePoint): void {
+  beginStroke<S extends StrokeSettings>(
+    tool: StrokeFactory<S>,
+    settings: S,
+    point: StrokePoint,
+  ): void {
     this.cancelStroke()
-    this.snapshotCtx.clearRect(0, 0, this.snapshot.width, this.snapshot.height)
-    this.snapshotCtx.drawImage(this.doc.canvas, 0, 0)
-    this.stroke = tool(this.doc.ctx, settings)
+    this.takeSnapshot()
+    this.stroke = tool(this.doc.ctx, settings, this.strokeEnv)
     this.strokeArea = null
     this.track(this.stroke.add(point))
   }
@@ -79,50 +86,49 @@ export class Editor {
   endStroke(): Rect | null {
     if (!this.stroke) return null
     this.track(this.stroke.finish())
-    const area = this.strokeArea && clampRect(this.strokeArea, this.doc.width, this.doc.height)
+    const area = this.clip(this.strokeArea)
     this.stroke = null
     this.strokeArea = null
-
-    if (area) {
-      const { x, y, width, height } = area
-      const before = this.snapshotCtx.getImageData(x, y, width, height)
-      // Read the result through the snapshot too: the document canvas stays
-      // on the GPU for fast drawing, and the snapshot is refreshed next stroke.
-      this.snapshotCtx.clearRect(x, y, width, height)
-      this.snapshotCtx.drawImage(this.doc.canvas, x, y, width, height, x, y, width, height)
-      const after = this.snapshotCtx.getImageData(x, y, width, height)
-      this.history.push({
-        rect: area,
-        before,
-        after,
-        bytes: before.data.byteLength + after.data.byteLength,
-      })
-      this.notifyHistory()
-    }
+    if (area) this.record(area)
     return area
   }
 
   /** Drops the stroke in progress and restores the pixels it changed. */
   cancelStroke(): void {
     if (!this.stroke) return
-    const area = this.strokeArea && clampRect(this.strokeArea, this.doc.width, this.doc.height)
+    const area = this.clip(this.strokeArea)
     if (area) {
-      this.doc.ctx.clearRect(area.x, area.y, area.width, area.height)
-      this.doc.ctx.drawImage(
-        this.snapshot,
-        area.x,
-        area.y,
-        area.width,
-        area.height,
-        area.x,
-        area.y,
-        area.width,
-        area.height,
-      )
+      this.restore(area)
       this.requestRender()
     }
     this.stroke = null
     this.strokeArea = null
+  }
+
+  // --- One-shot edits ------------------------------------------------------
+
+  /**
+   * Runs a single undoable change. `change` draws on the document and returns
+   * the area it touched, or null if nothing changed.
+   */
+  edit(change: (ctx: CanvasRenderingContext2D) => Rect | null): Rect | null {
+    if (this.stroke) return null
+    this.takeSnapshot()
+    const area = this.clip(change(this.doc.ctx))
+    if (area) {
+      this.record(area)
+      this.requestRender()
+    }
+    return area
+  }
+
+  /**
+   * Pixels of the whole image, read on the CPU. Cheap to sample many times;
+   * a fresh copy reflects every change made so far.
+   */
+  readImage(): ImageData {
+    this.takeSnapshot()
+    return this.snapshotCtx.getImageData(0, 0, this.doc.width, this.doc.height)
   }
 
   // --- History -------------------------------------------------------------
@@ -165,8 +171,46 @@ export class Editor {
     for (const listener of this.renderListeners) listener()
   }
 
+  // --- Internals -------------------------------------------------------------
+
   private notifyHistory(): void {
     for (const listener of this.historyListeners) listener()
+  }
+
+  private clip(rect: Rect | null): Rect | null {
+    return rect && clampRect(rect, this.doc.width, this.doc.height)
+  }
+
+  private takeSnapshot(): void {
+    this.snapshotCtx.clearRect(0, 0, this.snapshot.width, this.snapshot.height)
+    this.snapshotCtx.drawImage(this.doc.canvas, 0, 0)
+  }
+
+  /** Copies an area back from the snapshot onto the document. */
+  private restore(rect: Rect): void {
+    const area = this.clip(rect)
+    if (!area) return
+    const { x, y, width, height } = area
+    this.doc.ctx.clearRect(x, y, width, height)
+    this.doc.ctx.drawImage(this.snapshot, x, y, width, height, x, y, width, height)
+  }
+
+  /** Stores an area before (from the snapshot) and after (from the document) for undo. */
+  private record(area: Rect): void {
+    const { x, y, width, height } = area
+    const before = this.snapshotCtx.getImageData(x, y, width, height)
+    // Read the result through the snapshot too: the document canvas stays
+    // on the GPU for fast drawing, and the snapshot is refreshed next change.
+    this.snapshotCtx.clearRect(x, y, width, height)
+    this.snapshotCtx.drawImage(this.doc.canvas, x, y, width, height, x, y, width, height)
+    const after = this.snapshotCtx.getImageData(x, y, width, height)
+    this.history.push({
+      rect: area,
+      before,
+      after,
+      bytes: before.data.byteLength + after.data.byteLength,
+    })
+    this.notifyHistory()
   }
 
   private track(rect: Rect | null): void {

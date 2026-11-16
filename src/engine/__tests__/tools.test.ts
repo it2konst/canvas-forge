@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { roundBrushStroke } from '../tools/brush'
 import { hardSquareStroke } from '../tools/hard'
 import { unionRect, type Rect } from '../geometry'
-import { asContext, createMockContext } from './mockContext'
+import { asContext, createMockContext, noEnv } from './mockContext'
 
 const at = (x: number, y: number, pressure = 1) => ({ x, y, pressure })
 
 describe('hard square stroke (pencil, eraser)', () => {
   it('stamps one square per pixel, centred on the cursor pixel', () => {
     const mock = createMockContext()
-    const stroke = hardSquareStroke(asContext(mock), { color: '#ff0000', size: 3 })
+    const stroke = hardSquareStroke(asContext(mock), { color: '#ff0000', size: 3 }, noEnv)
     const area = stroke.add(at(10.7, 20.2))
     expect(mock.calls).toEqual([
       { name: 'fillRect', args: [9, 19, 3, 3], style: '#ff0000', lineWidth: 1 },
@@ -19,7 +19,7 @@ describe('hard square stroke (pencil, eraser)', () => {
 
   it('fills the whole line between samples, with no gaps', () => {
     const mock = createMockContext()
-    const stroke = hardSquareStroke(asContext(mock), { color: '#000', size: 1 })
+    const stroke = hardSquareStroke(asContext(mock), { color: '#000', size: 1 }, noEnv)
     stroke.add(at(0, 0))
     const area = stroke.add(at(5, 0))
     const xs = mock.calls.map((c) => c.args[0])
@@ -30,7 +30,7 @@ describe('hard square stroke (pencil, eraser)', () => {
 
   it('ignores samples that stay on the same pixel', () => {
     const mock = createMockContext()
-    const stroke = hardSquareStroke(asContext(mock), { color: '#000', size: 1 })
+    const stroke = hardSquareStroke(asContext(mock), { color: '#000', size: 1 }, noEnv)
     stroke.add(at(3.1, 3.1))
     expect(stroke.add(at(3.9, 3.4))).toBeNull()
     expect(mock.calls).toHaveLength(1)
@@ -38,7 +38,7 @@ describe('hard square stroke (pencil, eraser)', () => {
 
   it('rounds the size to whole pixels and never goes below one', () => {
     const mock = createMockContext()
-    hardSquareStroke(asContext(mock), { color: '#000', size: 0.2 }).add(at(0, 0))
+    hardSquareStroke(asContext(mock), { color: '#000', size: 0.2 }, noEnv).add(at(0, 0))
     expect(mock.calls[0]!.args.slice(2)).toEqual([1, 1])
   })
 })
@@ -46,7 +46,7 @@ describe('hard square stroke (pencil, eraser)', () => {
 describe('round brush stroke', () => {
   it('leaves a round dot on a click', () => {
     const mock = createMockContext()
-    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 10 })
+    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 10 }, noEnv)
     const area = stroke.add(at(50, 50))
     expect(mock.calls.map((c) => c.name)).toEqual(['arc', 'fill'])
     expect(mock.calls[0]!.args.slice(0, 3)).toEqual([50, 50, 5])
@@ -56,7 +56,7 @@ describe('round brush stroke', () => {
 
   it('reports an area that covers the whole stroke', () => {
     const mock = createMockContext()
-    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 4 })
+    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 4 }, noEnv)
     let area: Rect | null = null
     for (const p of [at(10, 10), at(20, 30), at(40, 30), at(60, 10)]) {
       const r = stroke.add(p)
@@ -75,7 +75,7 @@ describe('round brush stroke', () => {
 
   it('makes the line thinner as pen pressure drops', () => {
     const mock = createMockContext()
-    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 20 })
+    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 20 }, noEnv)
     stroke.add(at(0, 0, 1))
     for (let i = 1; i <= 20; i++) stroke.add(at(i * 5, 0, 1 - i * 0.045))
     const widths = mock.calls.filter((c) => c.name === 'stroke').map((c) => c.lineWidth)
@@ -85,7 +85,7 @@ describe('round brush stroke', () => {
 
   it('merges tiny moves instead of drawing them', () => {
     const mock = createMockContext()
-    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 4 })
+    const stroke = roundBrushStroke(asContext(mock), { color: '#00f', size: 4 }, noEnv)
     stroke.add(at(10, 10))
     expect(stroke.add(at(10.2, 10.1))).toBeNull()
   })

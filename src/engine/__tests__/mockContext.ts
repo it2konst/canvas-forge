@@ -32,3 +32,6 @@ export function createMockContext() {
 
 export const asContext = (mock: ReturnType<typeof createMockContext>) =>
   mock as unknown as CanvasRenderingContext2D
+
+/** For tools that never restore pixels. */
+export const noEnv = { restore: () => {} }
