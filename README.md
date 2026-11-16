@@ -12,7 +12,7 @@ Written from scratch with Vue 3 and TypeScript.
 
 ![canvas-forge in light and dark themes](docs/screenshots/overview.png)
 
-> **Work in progress.** You can already draw with the pencil, brush and eraser, with pen pressure and undo. Shapes, fill, files and more arrive in the next stages of the [roadmap](#roadmap).
+> **Work in progress.** Nine of the eleven tools work: pencil, brush, eraser, line, rectangle, ellipse, fill, color picker and text, all with undo. Zoom, files, selection and more arrive in the next stages of the [roadmap](#roadmap).
 
 ## Features
 
@@ -21,15 +21,19 @@ Written from scratch with Vue 3 and TypeScript.
 - Pencil: hard-edged square pixels with no anti-aliasing, good for pixel art
 - Brush: round and anti-aliased, smoothed with curves so fast strokes have no corners; pen pressure sets the width
 - Eraser: paints with color 2, like in Paint
+- Line, rectangle and ellipse with a live preview; Shift gives 45° lines, squares and circles; shapes come as an outline, filled, or outlined with color 1 and filled with color 2
+- Flood fill with adjustable tolerance, so fills reach into anti-aliased edges
+- Color picker: click or drag to take color 1, right-click for color 2, then the previous tool comes back
+- Text: type right on the image in the final font, size and color; multiple lines; Onest, a serif or JetBrains Mono
 - Left button paints with color 1, right button with color 2
-- Undo and redo for every stroke (up to 100 steps within a 256 MB budget); Escape cancels the stroke in progress
+- Undo and redo for every change (up to 100 steps within a 256 MB budget); Escape cancels the stroke in progress
 - The cursor shows the tool size at the current zoom, snapped to the pixel grid for the hard tools
 - Smooth input: every pointer sample the hardware reports is used, strokes continue past the edge of the canvas
 - Sharp on HiDPI screens: the canvas matches physical pixels
 - Editor layout: tool rail, properties panel, canvas area and status bar
-- 11 tools in three groups, each with a single-key shortcut; tools that are not implemented yet are shown disabled
+- 11 tools in three groups, each with a single-key shortcut; the two that are not implemented yet are shown disabled
+- The properties panel shows the options of the active tool
 - Color 1 and color 2 with a swap button, and the classic 20-color palette: click for color 1, right-click for color 2
-- Brush size control
 - Status bar with the cursor position in image pixels, the image size and the zoom level
 - The image fits the screen at any window size
 - Light, dark and system themes, tuned for long sessions: neutral grey chrome that does not tint your picture, no pure white or black, softened text contrast, every accent passes WCAG AA
@@ -39,7 +43,6 @@ Written from scratch with Vue 3 and TypeScript.
 
 **Planned**
 
-- Line, rectangle, ellipse, flood fill, color picker and text
 - Zoom and pan, resize the canvas
 - Open, paste and drop images; save as PNG, JPEG or WebP; autosave in the browser
 - Selection: move, copy, cut, paste, crop
@@ -99,6 +102,9 @@ Unit tests run with Vitest in Node and on every push in GitHub Actions. The draw
 - geometry: rectangle helpers and whole-pixel lines with no gaps
 - history: undo and redo order, the redo branch, step and memory limits
 - tools: pencil and eraser stamps, brush dots, the area each stroke reports, pressure thinning
+- shapes: Shift constraints, pixel boxes, the live preview being erased between frames
+- flood fill on small character maps: walls, diagonal gaps, tolerance, no-op fills, and a 1.5 megapixel area
+- colors and text: hex parsing, pixel sampling, line spacing and covered area
 
 ## Keyboard shortcuts
 
@@ -127,13 +133,13 @@ src/
     layout/      header, tool rail, canvas area, status bar, theme and language menus
     panels/      properties panel and its sections (colors, brush, layers)
   composables/   theme and language sync, canvas input, keyboard shortcuts
-  engine/        drawing engine in plain TypeScript: document, input, strokes, history
-    tools/       pencil and eraser (hard square), brush (round, pressure)
+  engine/        drawing engine in plain TypeScript: document, input, history, flood fill, colors
+    tools/       pencil and eraser (hard square), brush (round, pressure), shapes, text
   i18n/          vue-i18n setup and EN/RU messages
   plugins/       Vuetify setup
   stores/        Pinia: editor state, preferences, UI
   theme/         light and dark palettes
-  tools/         tool catalog, which engine tool backs each one, default palette
+  tools/         tool catalog and options, which engine tool backs each one, palette, fonts
   icons.ts       every icon the app uses, in one place
 ```
 
@@ -141,7 +147,7 @@ src/
 
 1. ~~Project shell: layout and panels, themes, EN/RU~~ ✓
 2. ~~Drawing engine: canvas, pencil, brush, eraser, pen pressure, undo and redo, tests and CI~~ ✓
-3. Shapes and fill: line, rectangle, ellipse, flood fill, color picker, text
+3. ~~Shapes and fill: line, rectangle, ellipse, flood fill, color picker, text~~ ✓
 4. Zoom and pan, canvas size
 5. Files: open, paste, drag and drop, save as PNG / JPEG / WebP, autosave
 6. Selection: move, copy, cut, paste, crop
