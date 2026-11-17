@@ -4,6 +4,7 @@ import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
 import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
 import { useCanvasInput } from '@/composables/useCanvasInput'
+import { useWheelZoom } from '@/composables/useWheelZoom'
 import BrushCursor from './BrushCursor.vue'
 import TextBox from './TextBox.vue'
 
@@ -81,6 +82,8 @@ function paint() {
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(doc.canvas, sx, sy, ex - sx, ey - sy, dx, dy, dw, dh)
 
+  if (zoom >= PIXEL_GRID_ZOOM) drawPixelGrid(ctx, dpr, zoom, x, y, sx, sy, ex, ey)
+
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)'
   ctx.lineWidth = 1 / dpr
   ctx.strokeRect(
@@ -89,6 +92,39 @@ function paint() {
     doc.width * zoom + 1 / dpr,
     doc.height * zoom + 1 / dpr,
   )
+}
+
+/** From this zoom on, a grid shows where each image pixel is. */
+const PIXEL_GRID_ZOOM = 8
+
+function drawPixelGrid(
+  ctx: CanvasRenderingContext2D,
+  dpr: number,
+  zoom: number,
+  x: number,
+  y: number,
+  sx: number,
+  sy: number,
+  ex: number,
+  ey: number,
+) {
+  ctx.beginPath()
+  // Lines on device-pixel centres, one device pixel wide.
+  const snap = (v: number) => (Math.round(v * dpr) + 0.5) / dpr
+  for (let i = sx; i <= ex; i++) {
+    const gx = snap(x + i * zoom)
+    ctx.moveTo(gx, y + sy * zoom)
+    ctx.lineTo(gx, y + ey * zoom)
+  }
+  for (let j = sy; j <= ey; j++) {
+    const gy = snap(y + j * zoom)
+    ctx.moveTo(x + sx * zoom, gy)
+    ctx.lineTo(x + ex * zoom, gy)
+  }
+  // Neutral grey with low alpha reads on light and dark pixels alike.
+  ctx.strokeStyle = 'rgba(128, 128, 128, 0.35)'
+  ctx.lineWidth = 1 / dpr
+  ctx.stroke()
 }
 
 /** Coalesces any number of repaint requests into one per animation frame. */
@@ -118,6 +154,7 @@ onBeforeUnmount(() => {
 })
 
 useCanvasInput(screen)
+useWheelZoom(screen)
 </script>
 
 <template>

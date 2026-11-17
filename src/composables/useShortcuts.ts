@@ -2,6 +2,7 @@ import { useEventListener } from '@vueuse/core'
 import { TOOLS } from '@/tools/catalog'
 import { isToolReady } from '@/tools/painters'
 import { useEditorStore } from '@/stores/editor'
+import { useViewStore } from '@/stores/view'
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -12,33 +13,50 @@ const isTyping = (target: EventTarget | null) =>
  * - single keys switch tools (B for brush, E for eraser...)
  * - Ctrl+Z undoes; Ctrl+Y and Ctrl+Shift+Z redo (Cmd on macOS)
  * - Escape drops the stroke in progress
+ * - Ctrl+= / Ctrl+- zoom, Ctrl+0 fits the image, Ctrl+1 shows it at 100%
+ *
+ * Keys are matched by their physical position (event.code), so shortcuts
+ * work the same with a Russian or any other keyboard layout.
  */
 export function useShortcuts() {
   const editor = useEditorStore()
+  const view = useViewStore()
 
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (isTyping(event.target)) return
-    const key = event.key.toLowerCase()
+    const code = event.code
     const mod = event.ctrlKey || event.metaKey
 
-    if (key === 'escape' && editor.engine.isStroking) {
+    if (code === 'Escape' && editor.engine.isStroking) {
       editor.engine.cancelStroke()
       return
     }
 
     if (mod && !event.altKey) {
-      if (key === 'z' && !event.shiftKey) {
+      const action = (
+        {
+          KeyZ: () => (event.shiftKey ? editor.redo() : editor.undo()),
+          KeyY: () => editor.redo(),
+          Equal: () => view.zoomIn(),
+          NumpadAdd: () => view.zoomIn(),
+          Minus: () => view.zoomOut(),
+          NumpadSubtract: () => view.zoomOut(),
+          Digit0: () => view.fit(),
+          Numpad0: () => view.fit(),
+          Digit1: () => view.actualSize(),
+          Numpad1: () => view.actualSize(),
+        } as Record<string, () => unknown>
+      )[code]
+      if (action) {
+        // Also stops the browser's own page zoom.
         event.preventDefault()
-        editor.undo()
-      } else if (key === 'y' || (key === 'z' && event.shiftKey)) {
-        event.preventDefault()
-        editor.redo()
+        action()
       }
       return
     }
 
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return
-    const tool = TOOLS.find((t) => t.shortcut.toLowerCase() === key)
+    const tool = TOOLS.find((t) => `Key${t.shortcut}` === code)
     if (tool && isToolReady(tool.id)) {
       editor.activeTool = tool.id
       event.preventDefault()

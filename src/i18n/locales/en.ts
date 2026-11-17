@@ -73,6 +73,12 @@ export default {
       ellipse: 'Hold Shift to draw a circle.',
     },
   },
+  zoom: {
+    in: 'Zoom in',
+    out: 'Zoom out',
+    fit: 'Fit to screen',
+    actual: 'Actual size',
+  },
   canvas: {
     label: 'Image',
   },

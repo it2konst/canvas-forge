@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEditorStore } from '@/stores/editor'
-import { useViewStore } from '@/stores/view'
+import ZoomControl from './ZoomControl.vue'
 
 const editor = useEditorStore()
-const view = useViewStore()
 
 const position = computed(() =>
   editor.pointer ? `${editor.pointer.x}, ${editor.pointer.y} px` : '-',
 )
 const size = computed(() => `${editor.canvasWidth} × ${editor.canvasHeight} px`)
-const zoom = computed(() => `${Math.round(view.zoom * 100)}%`)
 </script>
 
 <template>
@@ -22,14 +20,14 @@ const zoom = computed(() => `${Math.round(view.zoom * 100)}%`)
       <span class="label">{{ $t('status.size') }}:</span> {{ size }}
     </span>
     <v-spacer />
-    <span :title="$t('status.zoom')">{{ zoom }}</span>
+    <ZoomControl />
   </v-footer>
 </template>
 
 <style scoped>
 .status-bar {
   gap: 20px;
-  padding-inline: 12px;
+  padding-inline: 12px 4px;
   font-family: var(--cf-font-mono);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
