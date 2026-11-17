@@ -44,6 +44,8 @@ const size = computed(() => `${editor.canvasWidth} × ${editor.canvasHeight} px`
   overflow: hidden;
 }
 .size-button {
+  border: none;
+  background: transparent;
   font: inherit;
   color: inherit;
   padding: 2px 4px;
