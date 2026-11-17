@@ -4,9 +4,7 @@ import { isToolReady } from '@/tools/painters'
 import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
 
-const isTyping = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+import { isTyping } from './keyboard'
 
 /**
  * Global keyboard shortcuts, ignored while typing in a field:

@@ -15,6 +15,10 @@ export const useViewStore = defineStore('view', () => {
   const viewport = ref<Size>({ width: 0, height: 0 })
   /** While true the image follows the window size; any zoom or pan turns it off. */
   const fitting = ref(true)
+  /** Space is held: any tool pans, like the hand. */
+  const spaceHeld = ref(false)
+  /** A pan drag is in progress. */
+  const dragging = ref(false)
 
   const zoom = computed(() => view.value.zoom)
   const image = computed<Size>(() => ({ width: editor.canvasWidth, height: editor.canvasHeight }))
@@ -70,6 +74,8 @@ export const useViewStore = defineStore('view', () => {
     view,
     viewport,
     fitting,
+    spaceHeld,
+    dragging,
     zoom,
     setViewport,
     fit,

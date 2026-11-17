@@ -4,7 +4,8 @@ import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
 import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
 import { useCanvasInput } from '@/composables/useCanvasInput'
-import { useWheelZoom } from '@/composables/useWheelZoom'
+import { useWheel } from '@/composables/useWheel'
+import { usePanning } from '@/composables/usePanning'
 import BrushCursor from './BrushCursor.vue'
 import TextBox from './TextBox.vue'
 
@@ -153,8 +154,12 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(frame)
 })
 
+// Panning first: it claims its drags before a stroke can start.
+usePanning(screen)
 useCanvasInput(screen)
-useWheelZoom(screen)
+useWheel(screen)
+
+const panMode = computed(() => editor.activeTool === 'hand' || view.spaceHeld)
 </script>
 
 <template>
@@ -163,14 +168,16 @@ useWheelZoom(screen)
       ref="screen"
       class="screen"
       :class="{
-        'screen--outline-cursor': brushCursor?.visible,
-        'screen--text-cursor': editor.activeTool === 'text',
+        'screen--grab': panMode && !view.dragging,
+        'screen--grabbing': view.dragging,
+        'screen--outline-cursor': !panMode && !view.dragging && brushCursor?.visible,
+        'screen--text-cursor': !panMode && editor.activeTool === 'text',
       }"
       :aria-label="$t('canvas.label')"
       role="img"
     />
     <div class="stage" :style="stageStyle">
-      <BrushCursor ref="brushCursor" />
+      <BrushCursor v-show="!panMode && !view.dragging" ref="brushCursor" />
       <TextBox v-if="editor.textDraft" />
     </div>
   </div>
@@ -204,5 +211,11 @@ useWheelZoom(screen)
 }
 .screen--text-cursor {
   cursor: text;
+}
+.screen--grab {
+  cursor: grab;
+}
+.screen--grabbing {
+  cursor: grabbing;
 }
 </style>
