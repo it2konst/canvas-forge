@@ -6,6 +6,7 @@ import { useViewStore } from '@/stores/view'
 import { useCanvasInput } from '@/composables/useCanvasInput'
 import { useWheel } from '@/composables/useWheel'
 import { usePanning } from '@/composables/usePanning'
+import { usePinch } from '@/composables/usePinch'
 import BrushCursor from './BrushCursor.vue'
 import TextBox from './TextBox.vue'
 
@@ -154,7 +155,8 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(frame)
 })
 
-// Panning first: it claims its drags before a stroke can start.
+// Gestures first: they claim their pointers before a stroke can start.
+usePinch(screen)
 usePanning(screen)
 useCanvasInput(screen)
 useWheel(screen)

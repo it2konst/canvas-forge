@@ -65,6 +65,11 @@ export const useViewStore = defineStore('view', () => {
   const zoomOut = (anchor?: Point) => zoomTo(stepZoom(view.value.zoom, -1), anchor)
   const actualSize = () => zoomTo(1)
 
+  function setView(next: View) {
+    fitting.value = false
+    set(next)
+  }
+
   function panBy(dx: number, dy: number) {
     fitting.value = false
     set({ ...view.value, x: view.value.x + dx, y: view.value.y + dy })
@@ -85,5 +90,6 @@ export const useViewStore = defineStore('view', () => {
     zoomOut,
     actualSize,
     panBy,
+    setView,
   }
 })
