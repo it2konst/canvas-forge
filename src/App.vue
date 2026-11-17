@@ -7,6 +7,7 @@ import StatusBar from '@/components/layout/StatusBar.vue'
 import ToolRail from '@/components/layout/ToolRail.vue'
 import CanvasViewport from '@/components/layout/CanvasViewport.vue'
 import PropertiesPanel from '@/components/panels/PropertiesPanel.vue'
+import ImageSizeDialog from '@/components/dialogs/ImageSizeDialog.vue'
 
 useThemeSync()
 useLocaleSync()
@@ -25,6 +26,7 @@ useShortcuts()
         <CanvasViewport />
       </div>
     </v-main>
+    <ImageSizeDialog />
   </v-app>
 </template>
 

@@ -3,6 +3,7 @@ import { TOOLS } from '@/tools/catalog'
 import { isToolReady } from '@/tools/painters'
 import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
+import { useUiStore } from '@/stores/ui'
 
 import { isTyping } from './keyboard'
 
@@ -12,6 +13,7 @@ import { isTyping } from './keyboard'
  * - Ctrl+Z undoes; Ctrl+Y and Ctrl+Shift+Z redo (Cmd on macOS)
  * - Escape drops the stroke in progress
  * - Ctrl+= / Ctrl+- zoom, Ctrl+0 fits the image, Ctrl+1 shows it at 100%
+ * - Ctrl+E opens the image size dialog
  *
  * Keys are matched by their physical position (event.code), so shortcuts
  * work the same with a Russian or any other keyboard layout.
@@ -19,6 +21,7 @@ import { isTyping } from './keyboard'
 export function useShortcuts() {
   const editor = useEditorStore()
   const view = useViewStore()
+  const ui = useUiStore()
 
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (isTyping(event.target)) return
@@ -43,6 +46,7 @@ export function useShortcuts() {
           Numpad0: () => view.fit(),
           Digit1: () => view.actualSize(),
           Numpad1: () => view.actualSize(),
+          KeyE: () => (ui.imageSizeOpen = true),
         } as Record<string, () => unknown>
       )[code]
       if (action) {

@@ -6,6 +6,7 @@ import {
   iconOpen,
   iconProperties,
   iconRedo,
+  iconImageSize,
   iconSave,
   iconUndo,
 } from '@/icons'
@@ -52,6 +53,15 @@ const REPO_URL = 'https://github.com/it2konst/canvas-forge'
         :disabled="!editor.canRedo"
         @click="editor.redo"
       />
+      <template v-if="!xs">
+        <v-divider vertical inset class="mx-1" />
+        <IconAction
+          :icon="iconImageSize"
+          :label="$t('imageSize.title')"
+          shortcut="Ctrl+E"
+          @click="ui.imageSizeOpen = true"
+        />
+      </template>
     </div>
 
     <v-spacer />

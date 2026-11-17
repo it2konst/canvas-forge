@@ -18,6 +18,8 @@ export {
   mdiGithub as iconGithub,
   mdiHandBackRightOutline as iconHand,
   mdiLayersOutline as iconLayers,
+  mdiLinkVariant as iconLink,
+  mdiLinkVariantOff as iconLinkOff,
   mdiMagnifyMinusOutline as iconZoomOut,
   mdiMagnifyPlusOutline as iconZoomIn,
   mdiPencilOutline as iconPencil,
