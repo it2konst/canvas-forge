@@ -6,6 +6,7 @@ import type { Point } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
 import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
 import { fontById, type FontId } from '@/tools/fonts'
+import type { ResizeOperation } from '@/engine/resize'
 
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
@@ -39,6 +40,11 @@ export const useEditorStore = defineStore('editor', () => {
   engine.onHistoryChange(() => {
     canUndo.value = engine.canUndo
     canRedo.value = engine.canRedo
+  })
+
+  engine.onSizeChange(() => {
+    canvasWidth.value = engine.doc.width
+    canvasHeight.value = engine.doc.height
   })
 
   const undo = () => engine.undo()
@@ -95,6 +101,12 @@ export const useEditorStore = defineStore('editor', () => {
     if (tool !== 'text') void commitText()
   })
 
+  /** Applies a size change; text being typed is placed first so it is not lost. */
+  async function resizeImage(op: ResizeOperation) {
+    await commitText()
+    return engine.resize(op)
+  }
+
   function setColor(button: PaintButton, color: string) {
     if (button === 'primary') primaryColor.value = color
     else secondaryColor.value = color
@@ -129,6 +141,7 @@ export const useEditorStore = defineStore('editor', () => {
     openText,
     commitText,
     cancelText,
+    resizeImage,
     setColor,
     swapColors,
   }

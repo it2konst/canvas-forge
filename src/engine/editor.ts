@@ -5,16 +5,20 @@ import { clampRect, unionRect, type Point, type Rect } from './geometry'
 import { History, type HistoryEntry } from './history'
 import type { StrokePoint } from './input'
 import { drawText, fontShorthand, type TextStyle } from './tools/text'
+import { anchorOffset, smoothScaling, type ResizeOperation } from './resize'
 import type { Stroke, StrokeEnv, StrokeFactory, StrokeSettings } from './tools/types'
 
 type Listener = () => void
 
-/** One undoable change: the pixels of an area before and after it. */
-interface Patch extends HistoryEntry {
-  rect: Rect
-  before: ImageData
-  after: ImageData
-}
+/**
+ * One undoable change: the pixels of an area before and after it, or the
+ * whole image before and after a change of size.
+ */
+type Patch = HistoryEntry &
+  (
+    | { kind: 'pixels'; rect: Rect; before: ImageData; after: ImageData }
+    | { kind: 'resize'; before: ImageData; after: ImageData }
+  )
 
 const HISTORY_LIMITS = {
   maxSteps: 100,
@@ -33,6 +37,7 @@ export class Editor {
   private readonly history = new History<Patch>(HISTORY_LIMITS)
   private renderListeners = new Set<Listener>()
   private historyListeners = new Set<Listener>()
+  private sizeListeners = new Set<Listener>()
 
   private stroke: Stroke | null = null
   /** Everything the current stroke has touched, in image pixels. */
@@ -166,13 +171,49 @@ export class Editor {
     return this.snapshotCtx.getImageData(0, 0, this.doc.width, this.doc.height)
   }
 
+  // --- Size -----------------------------------------------------------------
+
+  /** Scales the picture or changes the canvas around it, as one undoable step. */
+  resize(op: ResizeOperation): boolean {
+    if (this.stroke) return false
+    const from = { width: this.doc.width, height: this.doc.height }
+    if (from.width === op.width && from.height === op.height) return false
+
+    const before = this.readImage()
+    this.doc.resize(op.width, op.height, (ctx, old) => {
+      if (op.kind === 'scale') {
+        ctx.imageSmoothingEnabled = smoothScaling(from, op)
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(old, 0, 0, op.width, op.height)
+      } else {
+        ctx.fillStyle = op.fill
+        ctx.fillRect(0, 0, op.width, op.height)
+        const at = anchorOffset(from, op, op.anchor)
+        ctx.drawImage(old, at.x, at.y)
+      }
+    })
+    this.matchSnapshot()
+    const after = this.readImage()
+
+    this.history.push({
+      kind: 'resize',
+      before,
+      after,
+      bytes: before.data.byteLength + after.data.byteLength,
+    })
+    this.notifySize()
+    this.notifyHistory()
+    this.requestRender()
+    return true
+  }
+
   // --- History -------------------------------------------------------------
 
   undo(): boolean {
     if (this.stroke) return false
     const patch = this.history.undo()
     if (!patch) return false
-    this.doc.write(patch.before, patch.rect)
+    this.apply(patch, 'before')
     this.requestRender()
     this.notifyHistory()
     return true
@@ -182,7 +223,7 @@ export class Editor {
     if (this.stroke) return false
     const patch = this.history.redo()
     if (!patch) return false
-    this.doc.write(patch.after, patch.rect)
+    this.apply(patch, 'after')
     this.requestRender()
     this.notifyHistory()
     return true
@@ -196,6 +237,12 @@ export class Editor {
     return () => this.renderListeners.delete(listener)
   }
 
+  /** Called whenever the image changes size, including by undo and redo. */
+  onSizeChange(listener: Listener): () => void {
+    this.sizeListeners.add(listener)
+    return () => this.sizeListeners.delete(listener)
+  }
+
   /** Called whenever undo or redo availability may have changed. */
   onHistoryChange(listener: Listener): () => void {
     this.historyListeners.add(listener)
@@ -207,6 +254,28 @@ export class Editor {
   }
 
   // --- Internals -------------------------------------------------------------
+
+  private notifySize(): void {
+    for (const listener of this.sizeListeners) listener()
+  }
+
+  private apply(patch: Patch, side: 'before' | 'after'): void {
+    const image = patch[side]
+    if (patch.kind === 'pixels') {
+      this.doc.write(image, patch.rect)
+      return
+    }
+    this.doc.replace(image)
+    this.matchSnapshot()
+    this.notifySize()
+  }
+
+  /** The snapshot always has the document's size. */
+  private matchSnapshot(): void {
+    if (this.snapshot.width === this.doc.width && this.snapshot.height === this.doc.height) return
+    this.snapshot.width = this.doc.width
+    this.snapshot.height = this.doc.height
+  }
 
   private notifyHistory(): void {
     for (const listener of this.historyListeners) listener()
@@ -240,6 +309,7 @@ export class Editor {
     this.snapshotCtx.drawImage(this.doc.canvas, x, y, width, height, x, y, width, height)
     const after = this.snapshotCtx.getImageData(x, y, width, height)
     this.history.push({
+      kind: 'pixels',
       rect: area,
       before,
       after,
