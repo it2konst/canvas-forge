@@ -3,11 +3,14 @@ import { attachPointerInput, type PaintButton } from '@/engine/input'
 import { sampleHex, type PixelBuffer } from '@/engine/pixels'
 import type { Point } from '@/engine/geometry'
 import { useEditorStore } from '@/stores/editor'
+import { useViewStore } from '@/stores/view'
+import { screenToImage } from '@/engine/view'
 import { strokeFactoryFor } from '@/tools/painters'
 
 /** Connects pointer input on the visible canvas to the engine. */
 export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) {
   const editor = useEditorStore()
+  const view = useViewStore()
   let detach: (() => void) | undefined
 
   /** While the colour picker is held down: the image to sample and the button. */
@@ -22,11 +25,11 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
   // Screen pixels to image pixels; fractional, so strokes stay precise when zoomed out.
   function toImage(clientX: number, clientY: number) {
     const rect = canvas.value!.getBoundingClientRect()
-    return {
-      x: ((clientX - rect.left) / rect.width) * editor.canvasWidth,
-      y: ((clientY - rect.top) / rect.height) * editor.canvasHeight,
-    }
+    return screenToImage(view.view, { x: clientX - rect.left, y: clientY - rect.top })
   }
+
+  const insideImage = (p: Point) =>
+    p.x >= 0 && p.y >= 0 && p.x < editor.canvasWidth && p.y < editor.canvasHeight
 
   watch(
     canvas,
@@ -45,7 +48,7 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
           if (editor.activeTool === 'text') {
             // A click outside the open text box finishes it, like in Paint.
             if (editor.textDraft) void editor.commitText()
-            else editor.openText(point, button)
+            else if (insideImage(point)) editor.openText(point, button)
             return
           }
           if (editor.activeTool === 'fill') {
@@ -69,7 +72,8 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
           editor.engine.endStroke()
         },
         hover(point) {
-          editor.pointer = point && { x: Math.floor(point.x), y: Math.floor(point.y) }
+          editor.pointer =
+            point && insideImage(point) ? { x: Math.floor(point.x), y: Math.floor(point.y) } : null
         },
       })
     },

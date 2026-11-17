@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEditorStore } from '@/stores/editor'
+import { useViewStore } from '@/stores/view'
 
 const editor = useEditorStore()
+const view = useViewStore()
 
 const position = computed(() =>
   editor.pointer ? `${editor.pointer.x}, ${editor.pointer.y} px` : '-',
 )
 const size = computed(() => `${editor.canvasWidth} × ${editor.canvasHeight} px`)
-const zoom = computed(() => `${Math.round(editor.zoom * 100)}%`)
+const zoom = computed(() => `${Math.round(view.zoom * 100)}%`)
 </script>
 
 <template>

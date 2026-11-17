@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEditorStore } from '@/stores/editor'
+import { useViewStore } from '@/stores/view'
 import { hasSizeCursor } from '@/tools/painters'
 
 /** Below this on-screen size an outline is useless; the crosshair takes over. */
 const MIN_VISIBLE_PX = 5
 
 const editor = useEditorStore()
+const view = useViewStore()
 
 const shape = computed(() => (editor.activeTool === 'brush' ? 'circle' : 'square'))
 
@@ -14,7 +16,7 @@ const style = computed(() => {
   const p = editor.pointer
   if (!p || !hasSizeCursor(editor.activeTool)) return null
 
-  const scale = editor.zoom
+  const scale = view.zoom
   const size = Math.max(1, Math.round(editor.brushSize))
   const px = size * scale
   if (px < MIN_VISIBLE_PX) return null

@@ -30,7 +30,6 @@ export const useEditorStore = defineStore('editor', () => {
 
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
-  const zoom = ref(1)
 
   // markRaw: the engine owns canvases and must not be made reactive.
   const engine = markRaw(new Editor(canvasWidth.value, canvasHeight.value))
@@ -117,7 +116,6 @@ export const useEditorStore = defineStore('editor', () => {
     textDraft,
     canvasWidth,
     canvasHeight,
-    zoom,
     engine,
     canUndo,
     canRedo,

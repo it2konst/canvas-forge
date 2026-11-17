@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, useTemplateRef, watch } from 'vue'
 import { TEXT_LINE_HEIGHT } from '@/engine/tools/text'
 import { fontById } from '@/tools/fonts'
 import { useEditorStore } from '@/stores/editor'
+import { useViewStore } from '@/stores/view'
 
 /**
  * The on-screen editor for the text tool: a borderless textarea laid over
@@ -10,12 +11,13 @@ import { useEditorStore } from '@/stores/editor'
  * with, so what you type is what lands on the image.
  */
 const editor = useEditorStore()
+const view = useViewStore()
 const field = useTemplateRef('field')
 
 const draft = computed(() => editor.textDraft!)
 
 const style = computed(() => {
-  const scale = editor.zoom
+  const scale = view.zoom
   const size = editor.fontSize * scale
   return {
     left: `${draft.value.at.x * scale}px`,
@@ -95,5 +97,6 @@ function onBlur(event: FocusEvent) {
   white-space: pre;
   font-weight: 400;
   caret-color: currentColor;
+  pointer-events: auto;
 }
 </style>
