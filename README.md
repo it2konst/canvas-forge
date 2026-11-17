@@ -12,7 +12,7 @@ Written from scratch with Vue 3 and TypeScript.
 
 ![canvas-forge in light and dark themes](docs/screenshots/overview.png)
 
-> **Work in progress.** Nine of the eleven tools work: pencil, brush, eraser, line, rectangle, ellipse, fill, color picker and text, all with undo. Zoom, files, selection and more arrive in the next stages of the [roadmap](#roadmap).
+> **Work in progress.** Ten of the eleven tools work, with zoom, panning, image size and undo for everything. Files, selection, layers and offline use arrive in the next stages of the [roadmap](#roadmap).
 
 ## Features
 
@@ -31,11 +31,16 @@ Written from scratch with Vue 3 and TypeScript.
 - Smooth input: every pointer sample the hardware reports is used, strokes continue past the edge of the canvas
 - Sharp on HiDPI screens: the canvas matches physical pixels
 - Editor layout: tool rail, properties panel, canvas area and status bar
-- 11 tools in three groups, each with a single-key shortcut; the two that are not implemented yet are shown disabled
+- Zoom from 3% to 6400%: Ctrl + wheel or trackpad pinch around the pointer, keyboard, or the control in the status bar with presets, fit to screen and actual size
+- Pan with the hand tool, by holding Space, with the middle mouse button, or by scrolling
+- Touch screens: pinch with two fingers to zoom and move; a pinch never leaves a mark
+- Pixel grid from 800%, hard-edged pixels when zoomed in; only the visible part of the image is drawn, so deep zoom stays fast
+- Image size: scale the picture, or change the canvas around it with one of nine anchors and new space in color 2; up to 8192 px a side, undoable
+- 11 tools in three groups, each with a single-key shortcut that works on any keyboard layout; selection is not implemented yet and is shown disabled
 - The properties panel shows the options of the active tool
 - Color 1 and color 2 with a swap button, and the classic 20-color palette: click for color 1, right-click for color 2
-- Status bar with the cursor position in image pixels, the image size and the zoom level
-- The image fits the screen at any window size
+- Status bar with the cursor position in image pixels, the image size (click it to change) and the zoom control
+- The image fits the screen until you zoom or pan, then stays where you put it
 - Light, dark and system themes, tuned for long sessions: neutral grey chrome that does not tint your picture, no pure white or black, softened text contrast, every accent passes WCAG AA
 - English and Russian interface; the browser language is picked on the first visit
 - Responsive layout down to phone width: on narrow screens the properties panel becomes a drawer
@@ -43,7 +48,6 @@ Written from scratch with Vue 3 and TypeScript.
 
 **Planned**
 
-- Zoom and pan, resize the canvas
 - Open, paste and drop images; save as PNG, JPEG or WebP; autosave in the browser
 - Selection: move, copy, cut, paste, crop
 - Layers
@@ -105,14 +109,23 @@ Unit tests run with Vitest in Node and on every push in GitHub Actions. The draw
 - shapes: Shift constraints, pixel boxes, the live preview being erased between frames
 - flood fill on small character maps: walls, diagonal gaps, tolerance, no-op fills, and a 1.5 megapixel area
 - colors and text: hex parsing, pixel sampling, line spacing and covered area
+- view: screen and image coordinates, fitting, zooming around a point, zoom steps, keeping the image on screen
+- image size: anchors when growing or cropping, linked proportions, side limits, crisp whole-number scaling
 
 ## Keyboard shortcuts
 
-| Keys                     | Action            |
-| ------------------------ | ----------------- |
-| `Ctrl+Z`                 | Undo              |
-| `Ctrl+Y`, `Ctrl+Shift+Z` | Redo              |
-| `Esc`                    | Cancel the stroke |
+| Keys                     | Action                       |
+| ------------------------ | ---------------------------- |
+| `Ctrl+Z`                 | Undo                         |
+| `Ctrl+Y`, `Ctrl+Shift+Z` | Redo                         |
+| `Esc`                    | Cancel the stroke            |
+| `Ctrl+=`, `Ctrl+-`       | Zoom in, zoom out            |
+| `Ctrl+0`                 | Fit to screen                |
+| `Ctrl+1`                 | Actual size (100%)           |
+| `Ctrl+E`                 | Image size                   |
+| `Space` + drag           | Pan with any tool            |
+| Ctrl + wheel             | Zoom around the pointer      |
+| Wheel, Shift + wheel     | Scroll up and down, sideways |
 
 On macOS use `Cmd` instead of `Ctrl`. Tools:
 
@@ -131,9 +144,11 @@ On macOS use `Cmd` instead of `Ctrl`. Tools:
 src/
   components/
     layout/      header, tool rail, canvas area, status bar, theme and language menus
-    panels/      properties panel and its sections (colors, brush, layers)
-  composables/   theme and language sync, canvas input, keyboard shortcuts
-  engine/        drawing engine in plain TypeScript: document, input, history, flood fill, colors
+    panels/      properties panel and its sections (colors, tool options, layers)
+    dialogs/     image size
+  composables/   theme and language sync, canvas input, wheel, panning, pinch, shortcuts
+  engine/        drawing engine in plain TypeScript: document, input, history, flood fill,
+                 colors, view math, resizing
     tools/       pencil and eraser (hard square), brush (round, pressure), shapes, text
   i18n/          vue-i18n setup and EN/RU messages
   plugins/       Vuetify setup
@@ -148,7 +163,7 @@ src/
 1. ~~Project shell: layout and panels, themes, EN/RU~~ ✓
 2. ~~Drawing engine: canvas, pencil, brush, eraser, pen pressure, undo and redo, tests and CI~~ ✓
 3. ~~Shapes and fill: line, rectangle, ellipse, flood fill, color picker, text~~ ✓
-4. Zoom and pan, canvas size
+4. ~~Zoom and pan, canvas size~~ ✓
 5. Files: open, paste, drag and drop, save as PNG / JPEG / WebP, autosave
 6. Selection: move, copy, cut, paste, crop
 7. Layers
