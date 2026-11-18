@@ -5,6 +5,8 @@
 export {
   mdiBrush as iconBrush,
   mdiCheck as iconCheck,
+  mdiContentSaveAlertOutline as iconAutosaveError,
+  mdiContentSaveCheckOutline as iconAutosaved,
   mdiDotsVertical as iconMore,
   mdiEllipseOutline as iconEllipse,
   mdiEraser as iconEraser,

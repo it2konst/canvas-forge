@@ -13,11 +13,13 @@ import SaveDialog from '@/components/dialogs/SaveDialog.vue'
 import AppNotice from '@/components/feedback/AppNotice.vue'
 import DropOverlay from '@/components/feedback/DropOverlay.vue'
 import { useFileDropAndPaste } from '@/composables/useFileDropAndPaste'
+import { useAutosave } from '@/composables/useAutosave'
 
 useThemeSync()
 useLocaleSync()
 useShortcuts()
 const { dragging } = useFileDropAndPaste()
+useAutosave()
 </script>
 
 <template>

@@ -147,6 +147,15 @@ export default {
     download: 'Download',
     failed: 'The image could not be saved. Try another format or a smaller size.',
   },
+  autosave: {
+    saving: 'Saving…',
+    saved: 'Saved in browser',
+    error: 'Not saved',
+    title:
+      'Your image is kept in this browser and comes back on your next visit. Last saved at {time}.',
+    failed:
+      'The image could not be kept in this browser (private mode or no space). Save it to a file to be safe.',
+  },
   canvas: {
     label: 'Image',
   },

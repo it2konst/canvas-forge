@@ -29,6 +29,10 @@ export const useEditorStore = defineStore('editor', () => {
   /** Text being typed: where it starts and which button opened it. */
   const textDraft = ref<{ at: Point; button: PaintButton; text: string } | null>(null)
 
+  /** State of the copy kept in the browser (see useAutosave). */
+  const autosave = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const autosavedAt = ref<number | null>(null)
+
   /** Name of the opened file without extension; suggested when saving. */
   const fileName = ref<string | null>(null)
 
@@ -130,6 +134,8 @@ export const useEditorStore = defineStore('editor', () => {
     fontId,
     textDraft,
     fileName,
+    autosave,
+    autosavedAt,
     canvasWidth,
     canvasHeight,
     engine,
