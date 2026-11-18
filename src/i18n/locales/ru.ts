@@ -117,6 +117,22 @@ export default {
   notice: {
     close: 'Закрыть',
   },
+  newImage: {
+    title: 'Новое изображение',
+    presets: 'Размеры',
+    preset: {
+      hd: 'По умолчанию',
+      fullHd: 'Full HD',
+      square: 'Квадрат',
+      story: 'Сторис',
+      a4: 'A4, 150 dpi',
+      small: 'Маленькое',
+    },
+    background: 'Фон',
+    bg: { white: 'Белый', color2: 'Цвет 2', transparent: 'Прозрачный' },
+    undoHint: 'Текущий рисунок не потеряется: отмена вернёт его.',
+    create: 'Создать',
+  },
   canvas: {
     label: 'Изображение',
   },

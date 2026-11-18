@@ -14,7 +14,7 @@ import { useImageFiles } from './useImageFiles'
  * - Ctrl+Z undoes; Ctrl+Y and Ctrl+Shift+Z redo (Cmd on macOS)
  * - Escape drops the stroke in progress
  * - Ctrl+= / Ctrl+- zoom, Ctrl+0 fits the image, Ctrl+1 shows it at 100%
- * - Ctrl+E opens the image size dialog, Ctrl+O opens a file
+ * - Ctrl+E opens the image size dialog, Ctrl+O opens a file, Ctrl+Alt+N a new image
  *
  * Keys are matched by their physical position (event.code), so shortcuts
  * work the same with a Russian or any other keyboard layout.
@@ -32,6 +32,13 @@ export function useShortcuts() {
 
     if (code === 'Escape' && editor.engine.isStroking) {
       editor.engine.cancelStroke()
+      return
+    }
+
+    // Ctrl+N belongs to the browser; Ctrl+Alt+N is free.
+    if (mod && event.altKey && code === 'KeyN') {
+      event.preventDefault()
+      ui.newImageOpen = true
       return
     }
 

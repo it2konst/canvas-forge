@@ -115,6 +115,22 @@ export default {
   notice: {
     close: 'Close',
   },
+  newImage: {
+    title: 'New image',
+    presets: 'Sizes',
+    preset: {
+      hd: 'Default',
+      fullHd: 'Full HD',
+      square: 'Square',
+      story: 'Story',
+      a4: 'A4, 150 dpi',
+      small: 'Small',
+    },
+    background: 'Background',
+    bg: { white: 'White', color2: 'Color 2', transparent: 'Transparent' },
+    undoHint: 'The current picture is not lost: Undo brings it back.',
+    create: 'Create',
+  },
   canvas: {
     label: 'Image',
   },

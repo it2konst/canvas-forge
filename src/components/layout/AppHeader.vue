@@ -37,7 +37,12 @@ const REPO_URL = 'https://github.com/it2konst/canvas-forge'
 
     <!-- File actions are not wired yet: they arrive with the files stage. -->
     <div class="d-flex align-center" role="toolbar" :aria-label="$t('header.file')">
-      <IconAction :icon="iconNew" :label="$t('header.new')" shortcut="Ctrl+Alt+N" disabled />
+      <IconAction
+        :icon="iconNew"
+        :label="$t('header.new')"
+        shortcut="Ctrl+Alt+N"
+        @click="ui.newImageOpen = true"
+      />
       <IconAction
         :icon="iconOpen"
         :label="$t('header.open')"
