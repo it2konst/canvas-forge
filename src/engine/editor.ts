@@ -17,7 +17,7 @@ type Listener = () => void
 type Patch = HistoryEntry &
   (
     | { kind: 'pixels'; rect: Rect; before: ImageData; after: ImageData }
-    | { kind: 'resize'; before: ImageData; after: ImageData }
+    | { kind: 'image'; before: ImageData; after: ImageData }
   )
 
 const HISTORY_LIMITS = {
@@ -175,12 +175,9 @@ export class Editor {
 
   /** Scales the picture or changes the canvas around it, as one undoable step. */
   resize(op: ResizeOperation): boolean {
-    if (this.stroke) return false
     const from = { width: this.doc.width, height: this.doc.height }
     if (from.width === op.width && from.height === op.height) return false
-
-    const before = this.readImage()
-    this.doc.resize(op.width, op.height, (ctx, old) => {
+    return this.replaceImage(op.width, op.height, (ctx, old) => {
       if (op.kind === 'scale') {
         ctx.imageSmoothingEnabled = smoothScaling(from, op)
         ctx.imageSmoothingQuality = 'high'
@@ -192,11 +189,90 @@ export class Editor {
         ctx.drawImage(old, at.x, at.y)
       }
     })
+  }
+
+  /** A blank image of the given size, as one undoable step. */
+  newImage(width: number, height: number, background: string): boolean {
+    return this.replaceImage(width, height, (ctx) => {
+      ctx.fillStyle = background
+      ctx.fillRect(0, 0, width, height)
+    })
+  }
+
+  /** Puts an opened picture in place of the current one, as one undoable step. */
+  openImage(picture: CanvasImageSource, width: number, height: number): boolean {
+    return this.replaceImage(width, height, (ctx) => {
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(picture, 0, 0, width, height)
+    })
+  }
+
+  /**
+   * Pastes a picture at the top-left corner. If it is larger than the image,
+   * the canvas grows to fit it first and the new space is filled with `fill`,
+   * like Paint does; either way it is one undoable step.
+   */
+  paste(picture: CanvasImageSource, width: number, height: number, fill: string): boolean {
+    const old = { width: this.doc.width, height: this.doc.height }
+    if (width <= old.width && height <= old.height) {
+      return (
+        this.edit((ctx) => {
+          ctx.globalCompositeOperation = 'source-over'
+          ctx.globalAlpha = 1
+          ctx.drawImage(picture, 0, 0, width, height)
+          return { x: 0, y: 0, width, height }
+        }) !== null
+      )
+    }
+    const w = Math.max(old.width, width)
+    const h = Math.max(old.height, height)
+    return this.replaceImage(w, h, (ctx, previous) => {
+      ctx.fillStyle = fill
+      ctx.fillRect(old.width, 0, w - old.width, h)
+      ctx.fillRect(0, old.height, old.width, h - old.height)
+      ctx.drawImage(previous, 0, 0)
+      ctx.drawImage(picture, 0, 0, width, height)
+    })
+  }
+
+  /**
+   * Starts over with this picture (or a white sheet) and an empty history.
+   * Used when an autosaved image is restored on start.
+   */
+  reset(picture: CanvasImageSource | null, width: number, height: number): void {
+    this.cancelStroke()
+    this.doc.resize(width, height, (ctx) => {
+      if (picture) {
+        ctx.drawImage(picture, 0, 0, width, height)
+      } else {
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillRect(0, 0, width, height)
+      }
+    })
+    this.matchSnapshot()
+    this.history.clear()
+    this.notifySize()
+    this.notifyHistory()
+    this.requestRender()
+  }
+
+  /**
+   * Replaces the whole image, size included, as one undoable step. `redraw`
+   * paints the new content and gets a copy of the old picture.
+   */
+  private replaceImage(
+    width: number,
+    height: number,
+    redraw: (ctx: CanvasRenderingContext2D, old: HTMLCanvasElement) => void,
+  ): boolean {
+    if (this.stroke) return false
+    const before = this.readImage()
+    this.doc.resize(width, height, redraw)
     this.matchSnapshot()
     const after = this.readImage()
 
     this.history.push({
-      kind: 'resize',
+      kind: 'image',
       before,
       after,
       bytes: before.data.byteLength + after.data.byteLength,
