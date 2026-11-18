@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { useDevicePixelRatio, useElementSize } from '@vueuse/core'
+import { useTheme } from 'vuetify'
 import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
 import { useCanvasInput } from '@/composables/useCanvasInput'
@@ -13,6 +14,7 @@ import TextBox from './TextBox.vue'
 const editor = useEditorStore()
 const view = useViewStore()
 const { pixelRatio } = useDevicePixelRatio()
+const theme = useTheme()
 
 const viewport = useTemplateRef('viewport')
 const screen = useTemplateRef('screen')
@@ -79,6 +81,14 @@ function paint() {
   ctx.fillRect(dx, dy, dw, dh)
   ctx.restore()
 
+  // Transparent pixels show a checkerboard, anchored to the image so it
+  // moves with it. Opaque images (the usual case) simply cover it.
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.fillStyle = checkerPattern(ctx)
+  ctx.fillRect(dx - x, dy - y, dw, dh)
+  ctx.restore()
+
   // Smoothed when zoomed out; hard pixels when zoomed in, as in any pixel editor.
   ctx.imageSmoothingEnabled = zoom < 1
   ctx.imageSmoothingQuality = 'high'
@@ -94,6 +104,29 @@ function paint() {
     doc.width * zoom + 1 / dpr,
     doc.height * zoom + 1 / dpr,
   )
+}
+
+/** Side of one checkerboard square, in CSS pixels; constant at every zoom. */
+const CHECKER = 8
+let checker: { key: string; pattern: CanvasPattern } | null = null
+
+/** Checkerboard in the theme's colours, rebuilt only when they change. */
+function checkerPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
+  const { colors } = theme.current.value
+  const a = String(colors['checker-a'])
+  const b = String(colors['checker-b'])
+  const key = `${a}|${b}`
+  if (checker?.key === key) return checker.pattern
+  const tile = document.createElement('canvas')
+  tile.width = tile.height = CHECKER * 2
+  const t = tile.getContext('2d')!
+  t.fillStyle = a
+  t.fillRect(0, 0, CHECKER * 2, CHECKER * 2)
+  t.fillStyle = b
+  t.fillRect(CHECKER, 0, CHECKER, CHECKER)
+  t.fillRect(0, CHECKER, CHECKER, CHECKER)
+  checker = { key, pattern: ctx.createPattern(tile, 'repeat')! }
+  return checker.pattern
 }
 
 /** From this zoom on, a grid shows where each image pixel is. */
@@ -147,6 +180,7 @@ watch(
 )
 
 watch(() => view.view, schedulePaint)
+watch(() => theme.current.value, schedulePaint)
 
 let stopRender: (() => void) | undefined
 onMounted(() => (stopRender = editor.engine.onRender(schedulePaint)))
