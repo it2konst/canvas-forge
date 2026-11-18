@@ -131,6 +131,22 @@ export default {
     undoHint: 'The current picture is not lost: Undo brings it back.',
     create: 'Create',
   },
+  save: {
+    title: 'Save image',
+    format: 'Format',
+    about: {
+      png: 'Lossless, keeps transparency. Best for drawings, screenshots and pixel art.',
+      jpeg: 'Small files for photos. No transparency: transparent areas become white.',
+      webp: 'Smaller than PNG and JPEG, keeps transparency. Supported by all current browsers.',
+    },
+    quality: 'Quality',
+    name: 'File name',
+    measuring: 'Measuring…',
+    size: 'File size: {size}',
+    private: 'The file is created on your device and goes straight to your downloads.',
+    download: 'Download',
+    failed: 'The image could not be saved. Try another format or a smaller size.',
+  },
   canvas: {
     label: 'Image',
   },

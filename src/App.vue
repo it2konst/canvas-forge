@@ -9,6 +9,7 @@ import CanvasViewport from '@/components/layout/CanvasViewport.vue'
 import PropertiesPanel from '@/components/panels/PropertiesPanel.vue'
 import ImageSizeDialog from '@/components/dialogs/ImageSizeDialog.vue'
 import NewImageDialog from '@/components/dialogs/NewImageDialog.vue'
+import SaveDialog from '@/components/dialogs/SaveDialog.vue'
 import AppNotice from '@/components/feedback/AppNotice.vue'
 import DropOverlay from '@/components/feedback/DropOverlay.vue'
 import { useFileDropAndPaste } from '@/composables/useFileDropAndPaste'
@@ -33,6 +34,7 @@ const { dragging } = useFileDropAndPaste()
     </v-main>
     <ImageSizeDialog />
     <NewImageDialog />
+    <SaveDialog />
     <AppNotice />
     <DropOverlay :active="dragging" />
   </v-app>

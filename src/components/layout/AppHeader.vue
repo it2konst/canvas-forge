@@ -35,7 +35,6 @@ const REPO_URL = 'https://github.com/it2konst/canvas-forge'
 
     <v-divider v-if="!xs" vertical inset class="mx-1" />
 
-    <!-- File actions are not wired yet: they arrive with the files stage. -->
     <div class="d-flex align-center" role="toolbar" :aria-label="$t('header.file')">
       <IconAction
         :icon="iconNew"
@@ -49,7 +48,12 @@ const REPO_URL = 'https://github.com/it2konst/canvas-forge'
         shortcut="Ctrl+O"
         @click="files.pick"
       />
-      <IconAction :icon="iconSave" :label="$t('header.save')" shortcut="Ctrl+S" disabled />
+      <IconAction
+        :icon="iconSave"
+        :label="$t('header.save')"
+        shortcut="Ctrl+S"
+        @click="ui.saveOpen = true"
+      />
       <v-divider vertical inset class="mx-1" />
       <IconAction
         :icon="iconUndo"

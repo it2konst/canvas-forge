@@ -6,6 +6,7 @@ export const useUiStore = defineStore('ui', () => {
   const propertiesOpen = ref(false)
   const imageSizeOpen = ref(false)
   const newImageOpen = ref(false)
+  const saveOpen = ref(false)
 
-  return { propertiesOpen, imageSizeOpen, newImageOpen }
+  return { propertiesOpen, imageSizeOpen, newImageOpen, saveOpen }
 })
