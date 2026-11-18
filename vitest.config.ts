@@ -10,7 +10,7 @@ export default mergeConfig(
       root: fileURLToPath(new URL('./', import.meta.url)),
       include: ['src/**/*.test.ts'],
       coverage: {
-        include: ['src/engine/**'],
+        include: ['src/engine/**', 'src/files/**'],
         exclude: ['src/**/__tests__/**'],
         reporter: ['text', 'html'],
       },
