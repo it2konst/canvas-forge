@@ -13,12 +13,14 @@ import {
 import { useUiStore } from '@/stores/ui'
 import { useEditorStore } from '@/stores/editor'
 import IconAction from './IconAction.vue'
+import { useImageFiles } from '@/composables/useImageFiles'
 import AppLogo from './AppLogo.vue'
 import ThemeMenu from './ThemeMenu.vue'
 import LanguageMenu from './LanguageMenu.vue'
 
 const ui = useUiStore()
 const editor = useEditorStore()
+const files = useImageFiles()
 const { smAndDown, xs } = useDisplay()
 
 const REPO_URL = 'https://github.com/it2konst/canvas-forge'
@@ -36,7 +38,12 @@ const REPO_URL = 'https://github.com/it2konst/canvas-forge'
     <!-- File actions are not wired yet: they arrive with the files stage. -->
     <div class="d-flex align-center" role="toolbar" :aria-label="$t('header.file')">
       <IconAction :icon="iconNew" :label="$t('header.new')" shortcut="Ctrl+Alt+N" disabled />
-      <IconAction :icon="iconOpen" :label="$t('header.open')" shortcut="Ctrl+O" disabled />
+      <IconAction
+        :icon="iconOpen"
+        :label="$t('header.open')"
+        shortcut="Ctrl+O"
+        @click="files.pick"
+      />
       <IconAction :icon="iconSave" :label="$t('header.save')" shortcut="Ctrl+S" disabled />
       <v-divider vertical inset class="mx-1" />
       <IconAction

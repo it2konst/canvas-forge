@@ -6,6 +6,7 @@ import { useViewStore } from '@/stores/view'
 import { useUiStore } from '@/stores/ui'
 
 import { isTyping } from './keyboard'
+import { useImageFiles } from './useImageFiles'
 
 /**
  * Global keyboard shortcuts, ignored while typing in a field:
@@ -13,7 +14,7 @@ import { isTyping } from './keyboard'
  * - Ctrl+Z undoes; Ctrl+Y and Ctrl+Shift+Z redo (Cmd on macOS)
  * - Escape drops the stroke in progress
  * - Ctrl+= / Ctrl+- zoom, Ctrl+0 fits the image, Ctrl+1 shows it at 100%
- * - Ctrl+E opens the image size dialog
+ * - Ctrl+E opens the image size dialog, Ctrl+O opens a file
  *
  * Keys are matched by their physical position (event.code), so shortcuts
  * work the same with a Russian or any other keyboard layout.
@@ -22,6 +23,7 @@ export function useShortcuts() {
   const editor = useEditorStore()
   const view = useViewStore()
   const ui = useUiStore()
+  const files = useImageFiles()
 
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (isTyping(event.target)) return
@@ -47,6 +49,7 @@ export function useShortcuts() {
           Digit1: () => view.actualSize(),
           Numpad1: () => view.actualSize(),
           KeyE: () => (ui.imageSizeOpen = true),
+          KeyO: () => files.pick(),
         } as Record<string, () => unknown>
       )[code]
       if (action) {

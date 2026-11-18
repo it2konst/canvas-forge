@@ -8,10 +8,14 @@ import ToolRail from '@/components/layout/ToolRail.vue'
 import CanvasViewport from '@/components/layout/CanvasViewport.vue'
 import PropertiesPanel from '@/components/panels/PropertiesPanel.vue'
 import ImageSizeDialog from '@/components/dialogs/ImageSizeDialog.vue'
+import AppNotice from '@/components/feedback/AppNotice.vue'
+import DropOverlay from '@/components/feedback/DropOverlay.vue'
+import { useFileDropAndPaste } from '@/composables/useFileDropAndPaste'
 
 useThemeSync()
 useLocaleSync()
 useShortcuts()
+const { dragging } = useFileDropAndPaste()
 </script>
 
 <template>
@@ -27,6 +31,8 @@ useShortcuts()
       </div>
     </v-main>
     <ImageSizeDialog />
+    <AppNotice />
+    <DropOverlay :active="dragging" />
   </v-app>
 </template>
 

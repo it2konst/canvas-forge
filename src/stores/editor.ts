@@ -29,6 +29,9 @@ export const useEditorStore = defineStore('editor', () => {
   /** Text being typed: where it starts and which button opened it. */
   const textDraft = ref<{ at: Point; button: PaintButton; text: string } | null>(null)
 
+  /** Name of the opened file without extension; suggested when saving. */
+  const fileName = ref<string | null>(null)
+
   const canvasWidth = ref(1280)
   const canvasHeight = ref(800)
 
@@ -126,6 +129,7 @@ export const useEditorStore = defineStore('editor', () => {
     fontSize,
     fontId,
     textDraft,
+    fileName,
     canvasWidth,
     canvasHeight,
     engine,

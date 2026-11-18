@@ -101,6 +101,20 @@ export default {
       end: { start: 'Bottom left', center: 'Bottom', end: 'Bottom right' },
     },
   },
+  files: {
+    dropTitle: 'Drop an image to open it',
+    dropHint: 'PNG, JPEG, WebP, GIF, BMP, AVIF or SVG. It stays on your device.',
+    scaledDown: 'The image was larger than {max} px and was scaled down to {width} × {height} px.',
+    pasteGrew: 'The pasted image was larger, so the canvas grew to {width} × {height} px.',
+    errors: {
+      type: '{name} is not an image this editor can open.',
+      size: '{name} is larger than 50 MB.',
+      decode: '{name} could not be read. The file may be damaged.',
+    },
+  },
+  notice: {
+    close: 'Close',
+  },
   canvas: {
     label: 'Image',
   },
