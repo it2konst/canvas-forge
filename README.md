@@ -12,7 +12,7 @@ Written from scratch with Vue 3 and TypeScript.
 
 ![canvas-forge in light and dark themes](docs/screenshots/overview.png)
 
-> **Work in progress.** Ten of the eleven tools work, along with zoom, image size, files and undo for everything. Selection, layers and offline use arrive in the next stages of the [roadmap](#roadmap).
+> **Work in progress.** All eleven tools work, along with selection and the clipboard, zoom, image size, files and undo for everything. Layers and offline use arrive in the next stages of the [roadmap](#roadmap).
 
 ## Features
 
@@ -37,11 +37,15 @@ Written from scratch with Vue 3 and TypeScript.
 - Pixel grid from 800%, hard-edged pixels when zoomed in; only the visible part of the image is drawn, so deep zoom stays fast
 - Image size: scale the picture, or change the canvas around it with one of nine anchors and new space in color 2; up to 8192 px a side, undoable
 - Open images from disk, drop them anywhere on the window or paste them with Ctrl+V: PNG, JPEG, WebP, GIF, BMP, AVIF and SVG; EXIF rotation is respected
-- Opening, a new image and pasting are undoable, so nothing is ever lost by accident; a pasted picture larger than the canvas grows it, like in Paint
+- Opening, a new image and pasting are undoable, so nothing is ever lost by accident
+- Selection: drag a rectangle (marching ants), drag it to move the pixels, Ctrl + drag to copy them, arrow keys to nudge; moving and putting down is one undo step
+- Clipboard: copy and cut to the system clipboard as PNG, so it pastes into other apps; pasted pictures float on top, ready to move; a picture larger than the canvas grows it, like in Paint
+- Select all, delete, and crop to the selection, from the keyboard or the properties panel
+- Colors, the active tool and its options are remembered between visits
 - New image with size presets (Full HD, square, story, A4) on a white, color 2 or transparent background; transparency is shown as a checkerboard
 - Save as PNG, JPEG or WebP with a quality setting and the real file size shown before you download
 - Autosave: the image is kept in the browser and comes back on the next visit
-- 11 tools in three groups, each with a single-key shortcut that works on any keyboard layout; selection is not implemented yet and is shown disabled
+- 11 tools in three groups, each with a single-key shortcut that works on any keyboard layout
 - The properties panel shows the options of the active tool
 - Color 1 and color 2 with a swap button, and the classic 20-color palette: click for color 1, right-click for color 2
 - Status bar with the cursor position in image pixels, the image size (click it to change) and the zoom control
@@ -53,14 +57,13 @@ Written from scratch with Vue 3 and TypeScript.
 
 **Planned**
 
-- Selection: move, copy, cut, paste, crop
 - Layers
 - Offline support and install as an app (PWA)
 
 ## Privacy and security
 
 - Everything happens in the browser: no server, no accounts, no analytics, no cookies.
-- The theme and language choices are kept in `localStorage`, the current image in IndexedDB; both stay on your device.
+- Theme, language, colors and tool settings are kept in `localStorage`, the current image in IndexedDB; both stay on your device.
 - Opened files are decoded locally; SVG files are rasterised through `<img>`, so scripts inside them never run.
 - `v-html` is forbidden by the lint config, so user content is never injected as raw HTML.
 - The deployed site sends a strict CSP: scripts, fonts and connections are limited to its own origin.
@@ -117,25 +120,32 @@ Unit tests run with Vitest in Node and on every push in GitHub Actions. The draw
 - view: screen and image coordinates, fitting, zooming around a point, zoom steps, keeping the image on screen
 - image size: anchors when growing or cropping, linked proportions, side limits, crisp whole-number scaling
 - files: which files count as images, refusing huge or foreign files before decoding, scaling down oversized images, safe file names, sizes in each language
+- selection: rectangles in every drag direction, clipping, hit testing, where pastes land; checks for settings read back from storage
 
 ## Keyboard shortcuts
 
-| Keys                     | Action                       |
-| ------------------------ | ---------------------------- |
-| `Ctrl+Z`                 | Undo                         |
-| `Ctrl+Y`, `Ctrl+Shift+Z` | Redo                         |
-| `Esc`                    | Cancel the stroke            |
-| `Ctrl+=`, `Ctrl+-`       | Zoom in, zoom out            |
-| `Ctrl+0`                 | Fit to screen                |
-| `Ctrl+1`                 | Actual size (100%)           |
-| `Ctrl+E`                 | Image size                   |
-| `Ctrl+O`                 | Open an image                |
-| `Ctrl+S`                 | Save                         |
-| `Ctrl+Alt+N`             | New image                    |
-| `Ctrl+V`                 | Paste an image               |
-| `Space` + drag           | Pan with any tool            |
-| Ctrl + wheel             | Zoom around the pointer      |
-| Wheel, Shift + wheel     | Scroll up and down, sideways |
+| Keys                     | Action                                               |
+| ------------------------ | ---------------------------------------------------- |
+| `Ctrl+Z`                 | Undo                                                 |
+| `Ctrl+Y`, `Ctrl+Shift+Z` | Redo                                                 |
+| `Esc`                    | Cancel the stroke, or deselect                       |
+| `Ctrl+=`, `Ctrl+-`       | Zoom in, zoom out                                    |
+| `Ctrl+0`                 | Fit to screen                                        |
+| `Ctrl+1`                 | Actual size (100%)                                   |
+| `Ctrl+E`                 | Image size                                           |
+| `Ctrl+O`                 | Open an image                                        |
+| `Ctrl+S`                 | Save                                                 |
+| `Ctrl+Alt+N`             | New image                                            |
+| `Ctrl+V`                 | Paste an image (floats, ready to move)               |
+| `Ctrl+A`                 | Select all                                           |
+| `Ctrl+C`, `Ctrl+X`       | Copy, cut (the whole image when nothing is selected) |
+| `Ctrl+Shift+X`           | Crop to the selection                                |
+| `Delete`                 | Clear the selection to color 2                       |
+| Arrows, Shift + arrows   | Move the selection by 1 px, 10 px                    |
+| `Enter`                  | Put moved pixels down                                |
+| `Space` + drag           | Pan with any tool                                    |
+| Ctrl + wheel             | Zoom around the pointer                              |
+| Wheel, Shift + wheel     | Scroll up and down, sideways                         |
 
 On macOS use `Cmd` instead of `Ctrl`. Tools:
 
@@ -165,7 +175,7 @@ src/
   i18n/          vue-i18n setup and EN/RU messages
   files/         loading and saving images, autosave storage
   plugins/       Vuetify setup
-  stores/        Pinia: editor state, preferences, UI
+  stores/        Pinia: editor state, view, preferences, UI, notifications, stored settings
   theme/         light and dark palettes
   tools/         tool catalog and options, which engine tool backs each one, palette, fonts
   icons.ts       every icon the app uses, in one place
@@ -178,7 +188,7 @@ src/
 3. ~~Shapes and fill: line, rectangle, ellipse, flood fill, color picker, text~~ ✓
 4. ~~Zoom and pan, canvas size~~ ✓
 5. ~~Files: open, paste, drag and drop, save as PNG / JPEG / WebP, autosave~~ ✓
-6. Selection: move, copy, cut, paste, crop
+6. ~~Selection: move, copy, cut, paste, crop~~ ✓
 7. Layers
 8. PWA: offline, install, open images with the app
 
