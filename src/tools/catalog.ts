@@ -26,7 +26,7 @@ export type ToolId =
   | 'ellipse'
 
 /** Settings shown in the properties panel while the tool is active. */
-export type ToolOption = 'size' | 'shapeStyle' | 'tolerance' | 'font' | 'pickerHint'
+export type ToolOption = 'size' | 'shapeStyle' | 'tolerance' | 'font' | 'pickerHint' | 'selection'
 
 export interface ToolDefinition {
   id: ToolId
@@ -39,7 +39,7 @@ export interface ToolDefinition {
 /** Tools grouped the way they appear in the rail, with a divider between groups. */
 export const TOOL_GROUPS: readonly (readonly ToolDefinition[])[] = [
   [
-    { id: 'select', icon: iconSelect, shortcut: 'S', options: [] },
+    { id: 'select', icon: iconSelect, shortcut: 'S', options: ['selection'] },
     { id: 'hand', icon: iconHand, shortcut: 'H', options: [] },
   ],
   [

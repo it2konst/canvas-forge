@@ -5,6 +5,8 @@ export interface StrokePoint extends Point {
   pressure: number
   /** Shift was held: shapes keep their proportions or snap their angle. */
   shift?: boolean
+  /** Ctrl (Cmd on macOS) was held: dragging a selection copies it. */
+  ctrl?: boolean
 }
 
 /** Left button paints with colour 1, right button with colour 2, like in Paint. */
@@ -52,6 +54,7 @@ export function attachPointerInput(
     ...toImage(event.clientX, event.clientY),
     pressure: pressureOf(event),
     shift: event.shiftKey,
+    ctrl: event.ctrlKey || event.metaKey,
   })
 
   function onDown(event: PointerEvent) {

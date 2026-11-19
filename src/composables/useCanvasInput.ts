@@ -6,6 +6,7 @@ import { useEditorStore } from '@/stores/editor'
 import { useViewStore } from '@/stores/view'
 import { screenToImage } from '@/engine/view'
 import { strokeFactoryFor } from '@/tools/painters'
+import { rectFromPoints } from '@/engine/selection'
 
 /** Connects pointer input on the visible canvas to the engine. */
 export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) {
@@ -15,6 +16,43 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
 
   /** While the colour picker is held down: the image to sample and the button. */
   let picking: { image: PixelBuffer; button: PaintButton } | null = null
+
+  /** While the select tool is dragging: drawing a new area, or moving pixels. */
+  let selecting:
+    { mode: 'area'; start: Point } | { mode: 'move'; offsetX: number; offsetY: number } | null =
+    null
+
+  function beginSelect(point: Point & { ctrl?: boolean }) {
+    const { engine } = editor
+    const p = { x: Math.floor(point.x), y: Math.floor(point.y) }
+    if (engine.isInSelection(p)) {
+      if (point.ctrl) {
+        // Ctrl + drag copies: put down what floats (a stamp) and lift a copy.
+        engine.settle()
+        engine.lift(null)
+      } else if (!engine.floating) {
+        engine.lift(editor.secondaryColor)
+      }
+      const sel = engine.selection!
+      selecting = { mode: 'move', offsetX: p.x - sel.x, offsetY: p.y - sel.y }
+      return
+    }
+    engine.select(null)
+    selecting = { mode: 'area', start: point }
+  }
+
+  function moveSelect(point: Point) {
+    if (!selecting) return
+    if (selecting.mode === 'move') {
+      editor.engine.moveFloating(
+        Math.floor(point.x) - selecting.offsetX,
+        Math.floor(point.y) - selecting.offsetY,
+      )
+    } else {
+      const image = { width: editor.canvasWidth, height: editor.canvasHeight }
+      editor.engine.select(rectFromPoints(selecting.start, point, image))
+    }
+  }
 
   function pick(point: Point) {
     if (!picking) return
@@ -39,6 +77,10 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
       if (!element) return
       detach = attachPointerInput(element, toImage, {
         begin(point, button) {
+          if (editor.activeTool === 'select') {
+            beginSelect(point)
+            return
+          }
           if (editor.activeTool === 'picker') {
             // One read of the image, then sampling while dragging is free.
             picking = { image: editor.engine.readImage(), button }
@@ -60,10 +102,15 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
           editor.engine.beginStroke(tool, editor.strokeSettings(button), point)
         },
         move(points) {
-          if (picking) pick(points.at(-1)!)
+          if (selecting) moveSelect(points.at(-1)!)
+          else if (picking) pick(points.at(-1)!)
           else editor.engine.extendStroke(points)
         },
         end() {
+          if (selecting) {
+            selecting = null
+            return
+          }
           if (picking) {
             picking = null
             editor.activeTool = editor.previousTool

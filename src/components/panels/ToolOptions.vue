@@ -93,6 +93,8 @@ const isShape = computed(() => ['line', 'rectangle', 'ellipse'].includes(tool.va
       <p class="hint">{{ $t('options.textHint') }}</p>
     </template>
 
+    <p v-if="has('selection')" class="hint">{{ $t('selection.hint') }}</p>
+
     <p v-if="has('pickerHint')" class="hint">{{ $t('options.pickerHint') }}</p>
 
     <p v-if="isShape" class="hint">{{ $t(`options.shiftHint.${tool.id}`) }}</p>

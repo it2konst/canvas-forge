@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { markRaw, ref, watch } from 'vue'
 import type { ToolId } from '@/tools/catalog'
 import { Editor } from '@/engine/editor'
-import type { Point } from '@/engine/geometry'
+import type { Point, Rect } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
 import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
 import { fontById, type FontId } from '@/tools/fonts'
@@ -52,6 +52,20 @@ export const useEditorStore = defineStore('editor', () => {
   engine.onSizeChange(() => {
     canvasWidth.value = engine.doc.width
     canvasHeight.value = engine.doc.height
+  })
+
+  /** Mirrors of the engine's selection, for the overlay and the panel. */
+  const selection = ref<Rect | null>(null)
+  const floating = ref(false)
+  engine.onSelectionChange(() => {
+    const sel = engine.selection
+    selection.value = sel && { ...sel }
+    floating.value = engine.floating !== null
+  })
+
+  // Like Paint: leaving the select tool puts the selection down and drops it.
+  watch(activeTool, (_tool, prev) => {
+    if (prev === 'select') engine.select(null)
   })
 
   const undo = () => engine.undo()
@@ -141,6 +155,8 @@ export const useEditorStore = defineStore('editor', () => {
     engine,
     canUndo,
     canRedo,
+    selection,
+    floating,
     undo,
     redo,
     pointer,

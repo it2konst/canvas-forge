@@ -10,6 +10,7 @@ import { usePanning } from '@/composables/usePanning'
 import { usePinch } from '@/composables/usePinch'
 import BrushCursor from './BrushCursor.vue'
 import TextBox from './TextBox.vue'
+import SelectionOverlay from './SelectionOverlay.vue'
 
 const editor = useEditorStore()
 const view = useViewStore()
@@ -93,6 +94,18 @@ function paint() {
   ctx.imageSmoothingEnabled = zoom < 1
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(doc.canvas, sx, sy, ex - sx, ey - sy, dx, dy, dw, dh)
+
+  // Pixels being moved or pasted float above the image, clipped to it.
+  const floating = editor.engine.floating
+  if (floating) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(x, y, doc.width * zoom, doc.height * zoom)
+    ctx.clip()
+    const { canvas: f } = floating
+    ctx.drawImage(f, x + floating.x * zoom, y + floating.y * zoom, f.width * zoom, f.height * zoom)
+    ctx.restore()
+  }
 
   if (zoom >= PIXEL_GRID_ZOOM) drawPixelGrid(ctx, dpr, zoom, x, y, sx, sy, ex, ey)
 
@@ -196,6 +209,21 @@ useCanvasInput(screen)
 useWheel(screen)
 
 const panMode = computed(() => editor.activeTool === 'hand' || view.spaceHeld)
+
+/** Over the selection the select tool moves it, so show the move cursor. */
+const overSelection = computed(() => {
+  const p = editor.pointer
+  const sel = editor.selection
+  return (
+    editor.activeTool === 'select' &&
+    !!p &&
+    !!sel &&
+    p.x >= sel.x &&
+    p.y >= sel.y &&
+    p.x < sel.x + sel.width &&
+    p.y < sel.y + sel.height
+  )
+})
 </script>
 
 <template>
@@ -208,6 +236,7 @@ const panMode = computed(() => editor.activeTool === 'hand' || view.spaceHeld)
         'screen--grabbing': view.dragging,
         'screen--outline-cursor': !panMode && !view.dragging && brushCursor?.visible,
         'screen--text-cursor': !panMode && editor.activeTool === 'text',
+        'screen--move': !panMode && overSelection,
       }"
       :aria-label="$t('canvas.label')"
       role="img"
@@ -215,6 +244,7 @@ const panMode = computed(() => editor.activeTool === 'hand' || view.spaceHeld)
     <div class="stage" :style="stageStyle">
       <BrushCursor v-show="!panMode && !view.dragging" ref="brushCursor" />
       <TextBox v-if="editor.textDraft" />
+      <SelectionOverlay />
     </div>
   </div>
 </template>
@@ -247,6 +277,9 @@ const panMode = computed(() => editor.activeTool === 'hand' || view.spaceHeld)
 }
 .screen--text-cursor {
   cursor: text;
+}
+.screen--move {
+  cursor: move;
 }
 .screen--grab {
   cursor: grab;

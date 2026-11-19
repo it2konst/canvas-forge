@@ -35,6 +35,15 @@ export function useShortcuts() {
       editor.engine.cancelStroke()
       return
     }
+    // Escape or Enter put a moved selection down; Escape also deselects.
+    if (code === 'Escape' && editor.selection) {
+      editor.engine.select(null)
+      return
+    }
+    if ((code === 'Enter' || code === 'NumpadEnter') && editor.floating) {
+      editor.engine.settle()
+      return
+    }
 
     // Ctrl+N belongs to the browser; Ctrl+Alt+N is free.
     if (mod && event.altKey && code === 'KeyN') {
