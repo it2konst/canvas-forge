@@ -157,6 +157,14 @@ export default {
       'The image could not be kept in this browser (private mode or no space). Save it to a file to be safe.',
   },
   selection: {
+    actions: 'Selection',
+    selectAll: 'Select all',
+    deselect: 'Deselect',
+    copy: 'Copy',
+    cut: 'Cut',
+    paste: 'Paste',
+    crop: 'Crop',
+    delete: 'Delete',
     hint: 'Drag to select. Drag the selection to move it (the gap is filled with color 2), Ctrl + drag to copy it. Enter or Esc puts it down.',
   },
   clipboard: {

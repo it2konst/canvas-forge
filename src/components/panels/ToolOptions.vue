@@ -4,6 +4,7 @@ import { toolById } from '@/tools/catalog'
 import { useEditorStore } from '@/stores/editor'
 import ShapeStylePicker from './ShapeStylePicker.vue'
 import { FONTS } from '@/tools/fonts'
+import SelectionActions from './SelectionActions.vue'
 
 const editor = useEditorStore()
 const tool = computed(() => toolById(editor.activeTool))
@@ -93,7 +94,10 @@ const isShape = computed(() => ['line', 'rectangle', 'ellipse'].includes(tool.va
       <p class="hint">{{ $t('options.textHint') }}</p>
     </template>
 
-    <p v-if="has('selection')" class="hint">{{ $t('selection.hint') }}</p>
+    <template v-if="has('selection')">
+      <SelectionActions />
+      <p class="hint">{{ $t('selection.hint') }}</p>
+    </template>
 
     <p v-if="has('pickerHint')" class="hint">{{ $t('options.pickerHint') }}</p>
 

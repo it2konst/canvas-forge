@@ -18,9 +18,19 @@ import { useClipboard } from './useClipboard'
  * - Ctrl+E opens the image size dialog, Ctrl+O opens a file,
  *   Ctrl+S saves, Ctrl+Alt+N starts a new image
  *
+ * - selection: Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+Shift+X crops, Delete clears,
+ *   arrows nudge, Enter puts moved pixels down, Escape deselects
+ *
  * Keys are matched by their physical position (event.code), so shortcuts
  * work the same with a Russian or any other keyboard layout.
  */
+const ARROWS: Record<string, [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+}
+
 export function useShortcuts() {
   const editor = useEditorStore()
   const view = useViewStore()
@@ -44,6 +54,21 @@ export function useShortcuts() {
     }
     if ((code === 'Enter' || code === 'NumpadEnter') && editor.floating) {
       editor.engine.settle()
+      return
+    }
+    if ((code === 'Delete' || code === 'Backspace') && editor.selection) {
+      event.preventDefault()
+      editor.engine.deleteSelection(editor.secondaryColor)
+      return
+    }
+    // Arrow keys nudge the selected pixels by 1 px, or 10 px with Shift.
+    const nudge = ARROWS[code]
+    if (nudge && editor.selection && editor.activeTool === 'select' && !mod) {
+      event.preventDefault()
+      const step = event.shiftKey ? 10 : 1
+      if (!editor.floating) editor.engine.lift(editor.secondaryColor)
+      const sel = editor.engine.selection!
+      editor.engine.moveFloating(sel.x + nudge[0] * step, sel.y + nudge[1] * step)
       return
     }
 
@@ -72,7 +97,11 @@ export function useShortcuts() {
           KeyS: () => (ui.saveOpen = true),
           // Ctrl+V needs no entry: the browser's paste event brings the data.
           KeyC: () => clipboard.copy(),
-          KeyX: () => clipboard.cut(),
+          KeyX: () => (event.shiftKey ? editor.engine.crop() : clipboard.cut()),
+          KeyA: () => {
+            editor.activeTool = 'select'
+            editor.engine.selectAll()
+          },
         } as Record<string, () => unknown>
       )[code]
       if (action) {
