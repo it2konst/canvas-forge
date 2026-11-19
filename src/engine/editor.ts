@@ -2,6 +2,7 @@ import { parseHex } from './color'
 import { RasterDocument } from './document'
 import { floodFill } from './fill'
 import { clampRect, unionRect, type Point, type Rect } from './geometry'
+import { containsPoint } from './selection'
 import { History, type HistoryEntry } from './history'
 import type { StrokePoint } from './input'
 import { drawText, fontShorthand, type TextStyle } from './tools/text'
@@ -9,6 +10,17 @@ import { anchorOffset, smoothScaling, type ResizeOperation } from './resize'
 import type { Stroke, StrokeEnv, StrokeFactory, StrokeSettings } from './tools/types'
 
 type Listener = () => void
+
+/**
+ * Pixels lifted off the image (being moved) or pasted, drawn on top of it
+ * until they are put down. `source` is where they were cut from, if anywhere.
+ */
+interface Floating {
+  canvas: HTMLCanvasElement
+  x: number
+  y: number
+  source: Rect | null
+}
 
 /**
  * One undoable change: the pixels of an area before and after it, or the
@@ -38,6 +50,10 @@ export class Editor {
   private renderListeners = new Set<Listener>()
   private historyListeners = new Set<Listener>()
   private sizeListeners = new Set<Listener>()
+  private selectionListeners = new Set<Listener>()
+
+  private selectionRect: Rect | null = null
+  private float: Floating | null = null
 
   private stroke: Stroke | null = null
   /** Everything the current stroke has touched, in image pixels. */
@@ -79,6 +95,7 @@ export class Editor {
     point: StrokePoint,
   ): void {
     this.cancelStroke()
+    this.settle()
     this.takeSnapshot()
     this.stroke = tool(this.doc.ctx, settings, this.strokeEnv)
     this.strokeArea = null
@@ -121,6 +138,7 @@ export class Editor {
    */
   edit(change: (ctx: CanvasRenderingContext2D) => Rect | null): Rect | null {
     if (this.stroke) return null
+    this.settle()
     this.takeSnapshot()
     const area = this.clip(change(this.doc.ctx))
     if (area) {
@@ -133,6 +151,7 @@ export class Editor {
   /** Flood-fills the area around a point; see floodFill for tolerance. */
   fill(point: Point, color: string, tolerance: number): Rect | null {
     if (this.stroke) return null
+    this.settle()
     const image = this.readImage()
     const area = floodFill(
       image,
@@ -241,6 +260,9 @@ export class Editor {
    */
   reset(picture: CanvasImageSource | null, width: number, height: number): void {
     this.cancelStroke()
+    this.float = null
+    this.selectionRect = null
+    this.notifySelection()
     this.doc.resize(width, height, (ctx) => {
       if (picture) {
         ctx.drawImage(picture, 0, 0, width, height)
@@ -266,6 +288,9 @@ export class Editor {
     redraw: (ctx: CanvasRenderingContext2D, old: HTMLCanvasElement) => void,
   ): boolean {
     if (this.stroke) return false
+    this.settle()
+    this.selectionRect = null
+    this.notifySelection()
     const before = this.readImage()
     this.doc.resize(width, height, redraw)
     this.matchSnapshot()
@@ -283,10 +308,168 @@ export class Editor {
     return true
   }
 
+  // --- Selection ------------------------------------------------------------
+
+  /** The selected area: the floating pixels while they move, else the selection. */
+  get selection(): Rect | null {
+    if (this.float) {
+      const { x, y, canvas } = this.float
+      return { x, y, width: canvas.width, height: canvas.height }
+    }
+    return this.selectionRect
+  }
+
+  get floating(): Readonly<Floating> | null {
+    return this.float
+  }
+
+  /** Selects an area (or nothing), putting down anything that floats first. */
+  select(rect: Rect | null): void {
+    this.settle()
+    this.selectionRect = rect && this.clip(rect)
+    this.notifySelection()
+    this.requestRender()
+  }
+
+  selectAll(): void {
+    this.select({ x: 0, y: 0, width: this.doc.width, height: this.doc.height })
+  }
+
+  isInSelection(p: Point): boolean {
+    const sel = this.selection
+    return sel !== null && containsPoint(sel, p)
+  }
+
+  /**
+   * Lifts the selected pixels so they can be moved. Without `fill` it is a
+   * copy and the original stays; with it the hole is filled with that
+   * colour, as Paint fills it with colour 2.
+   */
+  lift(fill: string | null): boolean {
+    if (this.stroke || this.float || !this.selectionRect) return false
+    const sel = this.selectionRect
+    this.takeSnapshot()
+    const canvas = this.copyArea(sel)
+    if (fill) {
+      this.doc.ctx.globalCompositeOperation = 'source-over'
+      this.doc.ctx.globalAlpha = 1
+      this.doc.ctx.fillStyle = fill
+      this.doc.ctx.clearRect(sel.x, sel.y, sel.width, sel.height)
+      this.doc.ctx.fillRect(sel.x, sel.y, sel.width, sel.height)
+    }
+    this.float = { canvas, x: sel.x, y: sel.y, source: fill ? sel : null }
+    this.notifySelection()
+    this.requestRender()
+    return true
+  }
+
+  moveFloating(x: number, y: number): void {
+    if (!this.float) return
+    this.float.x = Math.round(x)
+    this.float.y = Math.round(y)
+    this.notifySelection()
+    this.requestRender()
+  }
+
+  /** Floats a pasted picture at a point, on top of the image. */
+  pasteFloating(picture: CanvasImageSource, width: number, height: number, at: Point): void {
+    this.cancelStroke()
+    this.settle()
+    this.takeSnapshot()
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.getContext('2d')!.drawImage(picture, 0, 0, width, height)
+    this.float = { canvas, x: Math.round(at.x), y: Math.round(at.y), source: null }
+    this.notifySelection()
+    this.requestRender()
+  }
+
+  /** Puts floating pixels down: one undo step covers the lift and the move. */
+  commitFloating(): void {
+    const f = this.float
+    if (!f) return
+    this.float = null
+    const dest = { x: f.x, y: f.y, width: f.canvas.width, height: f.canvas.height }
+    this.doc.ctx.globalCompositeOperation = 'source-over'
+    this.doc.ctx.globalAlpha = 1
+    this.doc.ctx.drawImage(f.canvas, f.x, f.y)
+    this.selectionRect = this.clip(dest)
+    const area = this.clip(f.source ? unionRect(f.source, dest) : dest)
+    if (area) this.record(area)
+    this.notifySelection()
+    this.requestRender()
+  }
+
+  /** Drops floating pixels and restores what was under them. */
+  cancelFloating(): void {
+    const f = this.float
+    if (!f) return
+    this.float = null
+    if (f.source) this.restore(f.source)
+    this.selectionRect = f.source
+    this.notifySelection()
+    this.requestRender()
+  }
+
+  /** Clears the selected pixels to a colour, as one undo step. */
+  deleteSelection(fill: string): void {
+    const f = this.float
+    if (f) {
+      // The hole is already there; just forget the lifted pixels.
+      this.float = null
+      this.selectionRect = null
+      if (f.source) this.record(f.source)
+      this.notifySelection()
+      this.requestRender()
+      return
+    }
+    const sel = this.selectionRect
+    if (!sel) return
+    this.edit((ctx) => {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.globalAlpha = 1
+      ctx.fillStyle = fill
+      ctx.clearRect(sel.x, sel.y, sel.width, sel.height)
+      ctx.fillRect(sel.x, sel.y, sel.width, sel.height)
+      return sel
+    })
+    this.selectionRect = null
+    this.notifySelection()
+  }
+
+  /** Cuts the image down to the selection, as one undo step. */
+  crop(): boolean {
+    this.settle()
+    const sel = this.selectionRect
+    if (!sel) return false
+    return this.replaceImage(sel.width, sel.height, (ctx, old) =>
+      ctx.drawImage(old, -sel.x, -sel.y),
+    )
+  }
+
+  /** The selected pixels (or the whole image) as a new canvas, for copying. */
+  copySelection(): HTMLCanvasElement {
+    if (this.float) return this.copyCanvas(this.float.canvas)
+    return this.copyArea(
+      this.selectionRect ?? { x: 0, y: 0, width: this.doc.width, height: this.doc.height },
+    )
+  }
+
+  /** Puts down anything floating; called before every other change. */
+  settle(): void {
+    if (this.float) this.commitFloating()
+  }
+
   // --- History -------------------------------------------------------------
 
   undo(): boolean {
     if (this.stroke) return false
+    // Undo while moving a selection puts it back where it came from.
+    if (this.float) {
+      this.cancelFloating()
+      return true
+    }
     const patch = this.history.undo()
     if (!patch) return false
     this.apply(patch, 'before')
@@ -297,6 +480,7 @@ export class Editor {
 
   redo(): boolean {
     if (this.stroke) return false
+    this.settle()
     const patch = this.history.redo()
     if (!patch) return false
     this.apply(patch, 'after')
@@ -331,6 +515,44 @@ export class Editor {
 
   // --- Internals -------------------------------------------------------------
 
+  /** Called when the selection or the floating pixels change. */
+  onSelectionChange(listener: Listener): () => void {
+    this.selectionListeners.add(listener)
+    return () => this.selectionListeners.delete(listener)
+  }
+
+  private notifySelection(): void {
+    for (const listener of this.selectionListeners) listener()
+  }
+
+  private copyArea(rect: Rect): HTMLCanvasElement {
+    const canvas = document.createElement('canvas')
+    canvas.width = rect.width
+    canvas.height = rect.height
+    canvas
+      .getContext('2d')!
+      .drawImage(
+        this.doc.canvas,
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        0,
+        0,
+        rect.width,
+        rect.height,
+      )
+    return canvas
+  }
+
+  private copyCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+    const canvas = document.createElement('canvas')
+    canvas.width = source.width
+    canvas.height = source.height
+    canvas.getContext('2d')!.drawImage(source, 0, 0)
+    return canvas
+  }
+
   private notifySize(): void {
     for (const listener of this.sizeListeners) listener()
   }
@@ -343,6 +565,8 @@ export class Editor {
     }
     this.doc.replace(image)
     this.matchSnapshot()
+    this.selectionRect = null
+    this.notifySelection()
     this.notifySize()
   }
 
