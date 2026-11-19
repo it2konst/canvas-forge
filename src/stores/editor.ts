@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { markRaw, ref, watch } from 'vue'
-import type { ToolId } from '@/tools/catalog'
+import { TOOLS, type ToolId } from '@/tools/catalog'
+import { isToolReady } from '@/tools/painters'
+import { FONTS } from '@/tools/fonts'
+import { isHexColor, isIntIn, isOneOf, persisted } from './persisted'
 import { Editor } from '@/engine/editor'
 import type { Point, Rect } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
@@ -10,21 +13,35 @@ import type { ResizeOperation } from '@/engine/resize'
 
 /** Editor state shared by the panels, plus the drawing engine instance. */
 export const useEditorStore = defineStore('editor', () => {
-  const activeTool = ref<ToolId>('brush')
+  // Tool, colours and options are remembered between visits.
+  const savedTool = persisted<ToolId>(
+    'tool',
+    'brush',
+    (v): v is ToolId => isOneOf(TOOLS.map((t) => t.id))(v) && isToolReady(v),
+  )
+  const activeTool = ref<ToolId>(savedTool.value)
+  // The picker is momentary, so the tool it will return to is what is saved.
+  watch(activeTool, (tool) => {
+    if (tool !== 'picker') savedTool.value = tool
+  })
   /** The tool to return to after the colour picker, like in Paint. */
   const previousTool = ref<ToolId>('brush')
   watch(activeTool, (next, prev) => {
     if (next === 'picker' && prev !== 'picker') previousTool.value = prev
   })
 
-  const primaryColor = ref('#000000')
-  const secondaryColor = ref('#FFFFFF')
-  const brushSize = ref(8)
-  const shapeStyle = ref<ShapeStyle>('outline')
+  const primaryColor = persisted('color1', '#000000', isHexColor)
+  const secondaryColor = persisted('color2', '#FFFFFF', isHexColor)
+  const brushSize = persisted('size', 8, isIntIn(1, 100))
+  const shapeStyle = persisted<ShapeStyle>(
+    'shapeStyle',
+    'outline',
+    isOneOf(['outline', 'fill', 'both']),
+  )
   /** 0..100; a little tolerance makes fills cover anti-aliased edges. */
-  const fillTolerance = ref(10)
-  const fontSize = ref(32)
-  const fontId = ref<FontId>('sans')
+  const fillTolerance = persisted('tolerance', 10, isIntIn(0, 100))
+  const fontSize = persisted('fontSize', 32, isIntIn(8, 200))
+  const fontId = persisted<FontId>('font', 'sans', isOneOf(FONTS.map((f) => f.id)))
 
   /** Text being typed: where it starts and which button opened it. */
   const textDraft = ref<{ at: Point; button: PaintButton; text: string } | null>(null)
