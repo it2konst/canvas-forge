@@ -7,6 +7,7 @@ import { useUiStore } from '@/stores/ui'
 
 import { isTyping } from './keyboard'
 import { useImageFiles } from './useImageFiles'
+import { useClipboard } from './useClipboard'
 
 /**
  * Global keyboard shortcuts, ignored while typing in a field:
@@ -25,6 +26,7 @@ export function useShortcuts() {
   const view = useViewStore()
   const ui = useUiStore()
   const files = useImageFiles()
+  const clipboard = useClipboard()
 
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (isTyping(event.target)) return
@@ -68,6 +70,9 @@ export function useShortcuts() {
           KeyE: () => (ui.imageSizeOpen = true),
           KeyO: () => files.pick(),
           KeyS: () => (ui.saveOpen = true),
+          // Ctrl+V needs no entry: the browser's paste event brings the data.
+          KeyC: () => clipboard.copy(),
+          KeyX: () => clipboard.cut(),
         } as Record<string, () => unknown>
       )[code]
       if (action) {

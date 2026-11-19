@@ -159,6 +159,11 @@ export default {
   selection: {
     hint: 'Drag to select. Drag the selection to move it (the gap is filled with color 2), Ctrl + drag to copy it. Enter or Esc puts it down.',
   },
+  clipboard: {
+    copied: 'Selection copied.',
+    copiedImage: 'Whole image copied.',
+    noImage: 'There is no image in the clipboard. Copy one, then press Ctrl+V.',
+  },
   canvas: {
     label: 'Image',
   },

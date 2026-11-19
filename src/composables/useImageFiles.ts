@@ -4,6 +4,8 @@ import { MAX_SIDE } from '@/engine/resize'
 import { useEditorStore } from '@/stores/editor'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useViewStore } from '@/stores/view'
+import { screenToImage } from '@/engine/view'
+import { pastePosition } from '@/engine/selection'
 
 /** Opening, pasting and dropping image files, with friendly errors. */
 export function useImageFiles() {
@@ -40,18 +42,39 @@ export function useImageFiles() {
     loaded.release()
   }
 
-  /** Pastes at the top-left corner, growing the canvas if needed. */
-  async function paste(file: File) {
-    const loaded = await load(file)
-    if (!loaded) return
+  /**
+   * Floats a picture over the image, at the top-left of what is on screen,
+   * with the select tool active so it can be moved right away. A picture
+   * larger than the canvas grows it first (colour 2 fills the new space),
+   * like Paint does; that is its own undo step.
+   */
+  async function pastePicture(picture: CanvasImageSource, width: number, height: number) {
     await editor.commitText()
-    const grows = loaded.width > editor.canvasWidth || loaded.height > editor.canvasHeight
-    editor.engine.paste(loaded.picture, loaded.width, loaded.height, editor.secondaryColor)
-    if (grows) {
+    let at = pastePosition(screenToImage(view.view, { x: 0, y: 0 }), {
+      width: editor.canvasWidth,
+      height: editor.canvasHeight,
+    })
+    if (width > editor.canvasWidth || height > editor.canvasHeight) {
+      editor.engine.resize({
+        kind: 'canvas',
+        width: Math.max(width, editor.canvasWidth),
+        height: Math.max(height, editor.canvasHeight),
+        anchor: { x: 0, y: 0 },
+        fill: editor.secondaryColor,
+      })
+      at = { x: 0, y: 0 }
       notifications.notify(
         t('files.pasteGrew', { width: editor.canvasWidth, height: editor.canvasHeight }),
       )
     }
+    editor.activeTool = 'select'
+    editor.engine.pasteFloating(picture, width, height, at)
+  }
+
+  async function paste(file: File) {
+    const loaded = await load(file)
+    if (!loaded) return
+    await pastePicture(loaded.picture, loaded.width, loaded.height)
     loaded.release()
   }
 
@@ -67,5 +90,5 @@ export function useImageFiles() {
     input.click()
   }
 
-  return { open, paste, pick }
+  return { open, paste, pastePicture, pick }
 }

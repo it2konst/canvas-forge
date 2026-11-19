@@ -227,34 +227,6 @@ export class Editor {
   }
 
   /**
-   * Pastes a picture at the top-left corner. If it is larger than the image,
-   * the canvas grows to fit it first and the new space is filled with `fill`,
-   * like Paint does; either way it is one undoable step.
-   */
-  paste(picture: CanvasImageSource, width: number, height: number, fill: string): boolean {
-    const old = { width: this.doc.width, height: this.doc.height }
-    if (width <= old.width && height <= old.height) {
-      return (
-        this.edit((ctx) => {
-          ctx.globalCompositeOperation = 'source-over'
-          ctx.globalAlpha = 1
-          ctx.drawImage(picture, 0, 0, width, height)
-          return { x: 0, y: 0, width, height }
-        }) !== null
-      )
-    }
-    const w = Math.max(old.width, width)
-    const h = Math.max(old.height, height)
-    return this.replaceImage(w, h, (ctx, previous) => {
-      ctx.fillStyle = fill
-      ctx.fillRect(old.width, 0, w - old.width, h)
-      ctx.fillRect(0, old.height, old.width, h - old.height)
-      ctx.drawImage(previous, 0, 0)
-      ctx.drawImage(picture, 0, 0, width, height)
-    })
-  }
-
-  /**
    * Starts over with this picture (or a white sheet) and an empty history.
    * Used when an autosaved image is restored on start.
    */
