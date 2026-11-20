@@ -12,7 +12,7 @@ describe('hard square stroke (pencil, eraser)', () => {
     const stroke = hardSquareStroke(asContext(mock), { color: '#ff0000', size: 3 }, noEnv)
     const area = stroke.add(at(10.7, 20.2))
     expect(mock.calls).toEqual([
-      { name: 'fillRect', args: [9, 19, 3, 3], style: '#ff0000', lineWidth: 1 },
+      { name: 'fillRect', args: [9, 19, 3, 3], style: '#ff0000', lineWidth: 1, op: 'source-over' },
     ])
     expect(area).toEqual({ x: 9, y: 19, width: 3, height: 3 })
   })

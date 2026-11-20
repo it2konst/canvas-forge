@@ -61,23 +61,32 @@ async function run<T>(
 
 export const saveDraft = (draft: Draft) => run('readwrite', (s) => s.put(draft, KEY))
 
-/** The saved draft, upgraded to layers if it is older; null when there is none. */
-export async function loadDraft(backgroundName: string): Promise<Draft | null> {
-  const raw = (await run('readonly', (s) => s.get(KEY))) as Draft | LegacyDraft | undefined
-  if (!raw) return null
-  if ('version' in raw && raw.version === 2 && raw.layers.every((l) => l.image instanceof Blob)) {
-    return raw.layers.length ? raw : null
+/** Brings a stored draft of any version to the current shape; null if it is unusable. */
+export function upgradeDraft(raw: unknown, backgroundName: string): Draft | null {
+  if (!raw || typeof raw !== 'object') return null
+  const draft = raw as Partial<Draft> & Partial<LegacyDraft>
+  if (draft.version === 2) {
+    const ok = Array.isArray(draft.layers) && draft.layers.every((l) => l.image instanceof Blob)
+    return ok && draft.layers!.length ? (draft as Draft) : null
   }
-  if ('image' in raw && raw.image instanceof Blob) {
-    const { image, ...rest } = raw
+  if (draft.image instanceof Blob) {
+    const { image, width = 0, height = 0, name = null, savedAt = 0 } = draft
     return {
-      ...rest,
       version: 2,
-      active: 0,
       layers: [{ name: backgroundName, visible: true, opacity: 1, image }],
+      active: 0,
+      width,
+      height,
+      name,
+      savedAt,
     }
   }
   return null
+}
+
+/** The saved draft, upgraded to layers if it is older; null when there is none. */
+export async function loadDraft(backgroundName: string): Promise<Draft | null> {
+  return upgradeDraft(await run('readonly', (s) => s.get(KEY)), backgroundName)
 }
 
 export const clearDraft = () => run('readwrite', (s) => s.delete(KEY))
