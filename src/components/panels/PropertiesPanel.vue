@@ -8,6 +8,7 @@ import { useUiStore } from '@/stores/ui'
 import PanelSection from './PanelSection.vue'
 import ColorPanel from './ColorPanel.vue'
 import ToolOptions from './ToolOptions.vue'
+import LayersPanel from './LayersPanel.vue'
 
 const editor = useEditorStore()
 const ui = useUiStore()
@@ -41,15 +42,10 @@ const open = computed({
       <ToolOptions />
     </PanelSection>
 
-    <PanelSection :title="$t('panels.layers')" :icon="iconLayers">
-      <p class="placeholder">{{ $t('panels.comingSoon') }}</p>
+    <PanelSection :title="`${$t('panels.layers')} · ${editor.layers.length}`" :icon="iconLayers">
+      <LayersPanel />
     </PanelSection>
   </v-navigation-drawer>
 </template>
 
-<style scoped>
-.placeholder {
-  font-size: 0.8125rem;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-}
-</style>
+<style scoped></style>

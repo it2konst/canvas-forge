@@ -53,6 +53,8 @@ export function useShortcuts() {
       return
     }
     if ((code === 'Enter' || code === 'NumpadEnter') && editor.floating) {
+      // Otherwise Enter would also press whatever button has focus.
+      event.preventDefault()
       editor.engine.settle()
       return
     }

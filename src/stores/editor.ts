@@ -4,6 +4,7 @@ import { TOOLS, type ToolId } from '@/tools/catalog'
 import { isToolReady } from '@/tools/painters'
 import { FONTS } from '@/tools/fonts'
 import { isHexColor, isIntIn, isOneOf, persisted } from './persisted'
+import { nextNumberedName } from '@/engine/layers'
 import { Editor } from '@/engine/editor'
 import { i18n } from '@/i18n'
 import type { Point, Rect } from '@/engine/geometry'
@@ -87,6 +88,42 @@ export const useEditorStore = defineStore('editor', () => {
   watch(activeTool, (_tool, prev) => {
     if (prev === 'select') engine.select(null)
   })
+
+  /** Mirror of the layer stack (bottom first) for the layers panel. */
+  interface LayerInfo {
+    id: number
+    name: string
+    visible: boolean
+    opacity: number
+  }
+  const layers = ref<LayerInfo[]>([])
+  const activeLayer = ref(0)
+  const canMergeDown = ref(false)
+  const canAddLayer = ref(true)
+  function syncLayers() {
+    layers.value = engine.doc.layers.map(({ id, name, visible, opacity }) => ({
+      id,
+      name,
+      visible,
+      opacity,
+    }))
+    activeLayer.value = engine.doc.activeIndex
+    canMergeDown.value = engine.canMergeDown
+    canAddLayer.value = engine.canAddLayer
+  }
+  syncLayers()
+  engine.onLayersChange(syncLayers)
+
+  const t = i18n.global.t
+  const addLayer = () =>
+    engine.addLayer(
+      nextNumberedName(
+        (n) => t('layers.numbered', { n }),
+        layers.value.map((l) => l.name),
+      ),
+    )
+  const duplicateLayer = () =>
+    engine.duplicateLayer(t('layers.copyOf', { name: engine.doc.active.name }))
 
   const undo = () => engine.undo()
   const redo = () => engine.redo()
@@ -177,6 +214,12 @@ export const useEditorStore = defineStore('editor', () => {
     canRedo,
     selection,
     floating,
+    layers,
+    activeLayer,
+    canMergeDown,
+    canAddLayer,
+    addLayer,
+    duplicateLayer,
     undo,
     redo,
     pointer,
