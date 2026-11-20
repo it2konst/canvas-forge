@@ -12,7 +12,7 @@ Written from scratch with Vue 3 and TypeScript.
 
 ![canvas-forge in light and dark themes](docs/screenshots/overview.png)
 
-> **Work in progress.** All eleven tools work, along with selection and the clipboard, zoom, image size, files and undo for everything. Layers and offline use arrive in the next stages of the [roadmap](#roadmap).
+> **Work in progress.** All eleven tools work, along with selection and the clipboard, zoom, image size, files and undo for everything. Layers work too. Offline use and installing as an app are the last stage of the [roadmap](#roadmap).
 
 ## Features
 
@@ -20,7 +20,7 @@ Written from scratch with Vue 3 and TypeScript.
 
 - Pencil: hard-edged square pixels with no anti-aliasing, good for pixel art
 - Brush: round and anti-aliased, smoothed with curves so fast strokes have no corners; pen pressure sets the width
-- Eraser: paints with color 2, like in Paint
+- Eraser: paints with color 2 on the background layer, like in Paint, and erases to transparency on the layers above
 - Line, rectangle and ellipse with a live preview; Shift gives 45° lines, squares and circles; shapes come as an outline, filled, or outlined with color 1 and filled with color 2
 - Flood fill with adjustable tolerance, so fills reach into anti-aliased edges
 - Color picker: click or drag to take color 1, right-click for color 2, then the previous tool comes back
@@ -42,6 +42,8 @@ Written from scratch with Vue 3 and TypeScript.
 - Clipboard: copy and cut to the system clipboard as PNG, so it pastes into other apps; pasted pictures float on top, ready to move; a picture larger than the canvas grows it, like in Paint
 - Select all, delete, and crop to the selection, from the keyboard or the properties panel
 - Colors, the active tool and its options are remembered between visits
+- Layers: up to 20, with live thumbnails, visibility, opacity, renaming, reordering, duplicating and merging down; every tool works on the active layer and every layer action can be undone
+- Undo for layers is cheap: deleting or reordering stores no pixels, the layer objects themselves stay in history
 - New image with size presets (Full HD, square, story, A4) on a white, color 2 or transparent background; transparency is shown as a checkerboard
 - Save as PNG, JPEG or WebP with a quality setting and the real file size shown before you download
 - Autosave: the image is kept in the browser and comes back on the next visit
@@ -57,13 +59,12 @@ Written from scratch with Vue 3 and TypeScript.
 
 **Planned**
 
-- Layers
 - Offline support and install as an app (PWA)
 
 ## Privacy and security
 
 - Everything happens in the browser: no server, no accounts, no analytics, no cookies.
-- Theme, language, colors and tool settings are kept in `localStorage`, the current image in IndexedDB; both stay on your device.
+- Theme, language, colors and tool settings are kept in `localStorage`, the current image (every layer) in IndexedDB; both stay on your device.
 - Opened files are decoded locally; SVG files are rasterised through `<img>`, so scripts inside them never run.
 - `v-html` is forbidden by the lint config, so user content is never injected as raw HTML.
 - The deployed site sends a strict CSP: scripts, fonts and connections are limited to its own origin.
@@ -121,6 +122,7 @@ Unit tests run with Vitest in Node and on every push in GitHub Actions. The draw
 - image size: anchors when growing or cropping, linked proportions, side limits, crisp whole-number scaling
 - files: which files count as images, refusing huge or foreign files before decoding, scaling down oversized images, safe file names, sizes in each language
 - selection: rectangles in every drag direction, clipping, hit testing, where pastes land; checks for settings read back from storage
+- layers: reordering, which layer becomes active after a delete, numbered names, opacity, erasing to transparency, upgrading older autosaves
 
 ## Keyboard shortcuts
 
@@ -164,13 +166,13 @@ On macOS use `Cmd` instead of `Ctrl`. Tools:
 src/
   components/
     layout/      header, tool rail, canvas area, status bar, theme and language menus
-    panels/      properties panel and its sections (colors, tool options, layers)
+    panels/      properties panel and its sections (colors, tool options, selection, layers)
     dialogs/     image size, new image, save
     feedback/    notifications, drop overlay
   composables/   theme and language sync, canvas input, wheel, panning, pinch, shortcuts,
                  opening, drop and paste, autosave
   engine/        drawing engine in plain TypeScript: document, input, history, flood fill,
-                 colors, view math, resizing
+                 colors, view math, resizing, selection, layers
     tools/       pencil and eraser (hard square), brush (round, pressure), shapes, text
   i18n/          vue-i18n setup and EN/RU messages
   files/         loading and saving images, autosave storage
@@ -189,7 +191,7 @@ src/
 4. ~~Zoom and pan, canvas size~~ ✓
 5. ~~Files: open, paste, drag and drop, save as PNG / JPEG / WebP, autosave~~ ✓
 6. ~~Selection: move, copy, cut, paste, crop~~ ✓
-7. Layers
+7. ~~Layers~~ ✓
 8. PWA: offline, install, open images with the app
 
 ## Author
