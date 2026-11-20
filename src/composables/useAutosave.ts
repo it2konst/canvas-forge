@@ -11,7 +11,7 @@ import { useViewStore } from '@/stores/view'
 const DELAY_MS = 1500
 
 /**
- * Keeps the current image in the browser and brings it back on the next
+ * Keeps the current image, every layer of it, in the browser and brings it back on the next
  * visit. Writes after a pause in editing and right away when the tab is
  * hidden or closed, so a reload never loses more than a moment of work.
  */
@@ -29,9 +29,18 @@ export function useAutosave() {
     editor.autosave = 'saving'
     try {
       const { doc } = editor.engine
-      const image = await encode(doc.canvas, 'png', 1)
+      const layers = await Promise.all(
+        doc.layers.map(async (layer) => ({
+          name: layer.name,
+          visible: layer.visible,
+          opacity: layer.opacity,
+          image: await encode(layer.canvas, 'png', 1),
+        })),
+      )
       await saveDraft({
-        image,
+        version: 2,
+        layers,
+        active: doc.activeIndex,
         width: doc.width,
         height: doc.height,
         name: editor.fileName,
@@ -62,12 +71,18 @@ export function useAutosave() {
 
   onMounted(async () => {
     try {
-      const draft = await loadDraft()
+      const draft = await loadDraft(t('layers.background'))
       // Something was already drawn or opened while loading: keep that.
       if (!draft || editor.canUndo) return
-      const bitmap = await createImageBitmap(draft.image)
-      editor.engine.reset(bitmap, draft.width, draft.height)
-      bitmap.close()
+      const pictures = await Promise.all(draft.layers.map((l) => createImageBitmap(l.image)))
+      if (editor.canUndo) return
+      editor.engine.load(
+        draft.width,
+        draft.height,
+        draft.layers.map((l, i) => ({ ...l, picture: pictures[i]! })),
+        draft.active,
+      )
+      for (const bitmap of pictures) bitmap.close()
       editor.fileName = draft.name
       editor.autosave = 'saved'
       editor.autosavedAt = draft.savedAt

@@ -5,6 +5,7 @@ import { isToolReady } from '@/tools/painters'
 import { FONTS } from '@/tools/fonts'
 import { isHexColor, isIntIn, isOneOf, persisted } from './persisted'
 import { Editor } from '@/engine/editor'
+import { i18n } from '@/i18n'
 import type { Point, Rect } from '@/engine/geometry'
 import type { PaintButton } from '@/engine/input'
 import type { ShapeSettings, ShapeStyle } from '@/engine/tools/shapes'
@@ -57,7 +58,9 @@ export const useEditorStore = defineStore('editor', () => {
   const canvasHeight = ref(800)
 
   // markRaw: the engine owns canvases and must not be made reactive.
-  const engine = markRaw(new Editor(canvasWidth.value, canvasHeight.value))
+  const engine = markRaw(
+    new Editor(canvasWidth.value, canvasHeight.value, i18n.global.t('layers.background')),
+  )
 
   const canUndo = ref(false)
   const canRedo = ref(false)

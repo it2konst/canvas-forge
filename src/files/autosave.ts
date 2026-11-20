@@ -2,7 +2,25 @@
  * The current image, kept in the browser's IndexedDB so work survives a
  * closed tab or a reload. It never leaves the device.
  */
+export interface DraftLayer {
+  name: string
+  visible: boolean
+  opacity: number
+  image: Blob
+}
+
 export interface Draft {
+  version: 2
+  layers: DraftLayer[]
+  active: number
+  width: number
+  height: number
+  name: string | null
+  savedAt: number
+}
+
+/** Drafts written before layers existed held a single image. */
+interface LegacyDraft {
   image: Blob
   width: number
   height: number
@@ -43,9 +61,23 @@ async function run<T>(
 
 export const saveDraft = (draft: Draft) => run('readwrite', (s) => s.put(draft, KEY))
 
-export async function loadDraft(): Promise<Draft | null> {
-  const draft = (await run('readonly', (s) => s.get(KEY))) as Draft | undefined
-  return draft?.image instanceof Blob ? draft : null
+/** The saved draft, upgraded to layers if it is older; null when there is none. */
+export async function loadDraft(backgroundName: string): Promise<Draft | null> {
+  const raw = (await run('readonly', (s) => s.get(KEY))) as Draft | LegacyDraft | undefined
+  if (!raw) return null
+  if ('version' in raw && raw.version === 2 && raw.layers.every((l) => l.image instanceof Blob)) {
+    return raw.layers.length ? raw : null
+  }
+  if ('image' in raw && raw.image instanceof Blob) {
+    const { image, ...rest } = raw
+    return {
+      ...rest,
+      version: 2,
+      active: 0,
+      layers: [{ name: backgroundName, visible: true, opacity: 1, image }],
+    }
+  }
+  return null
 }
 
 export const clearDraft = () => run('readwrite', (s) => s.delete(KEY))

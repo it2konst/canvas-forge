@@ -174,6 +174,9 @@ export default {
     copiedImage: 'Изображение скопировано целиком.',
     noImage: 'В буфере обмена нет изображения. Скопируйте его и нажмите Ctrl+V.',
   },
+  layers: {
+    background: 'Фон',
+  },
   canvas: {
     label: 'Изображение',
   },

@@ -1,65 +1,156 @@
-import type { Rect } from './geometry'
+import { moveItem } from './layers'
 
 export const DEFAULT_BACKGROUND = '#FFFFFF'
 
-/**
- * The image being edited: one off-screen canvas at full resolution.
- * It knows nothing about the screen; the viewport draws it scaled.
- */
-export class RasterDocument {
+/** One layer: a full-size canvas plus how it is shown. */
+export interface Layer {
+  readonly id: number
+  name: string
+  visible: boolean
+  /** 0..1 */
+  opacity: number
   readonly canvas: HTMLCanvasElement
   readonly ctx: CanvasRenderingContext2D
+}
+
+/**
+ * The layer list without pixels: which layers, in which order, with which
+ * names and settings, and which one is active. Undo of add, delete, reorder
+ * and settings changes restores one of these; the layer objects themselves
+ * (and their pixels) stay alive in history, so nothing is copied.
+ */
+export interface Structure {
+  layers: { layer: Layer; name: string; visible: boolean; opacity: number }[]
+  activeId: number
+}
+
+function makeCanvas(
+  width: number,
+  height: number,
+): {
+  canvas: HTMLCanvasElement
+  ctx: CanvasRenderingContext2D
+} {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D is not supported')
+  return { canvas, ctx }
+}
+
+/**
+ * The image being edited: a stack of full-size off-screen canvases, bottom
+ * first. It knows nothing about the screen; the viewport draws it scaled.
+ */
+export class RasterDocument {
+  layers: Layer[] = []
+  activeIndex = 0
+  private nextId = 1
 
   constructor(
     public width: number,
     public height: number,
-    background = DEFAULT_BACKGROUND,
+    background: string | null = DEFAULT_BACKGROUND,
+    name = 'Background',
   ) {
-    this.canvas = document.createElement('canvas')
-    this.canvas.width = width
-    this.canvas.height = height
-    const ctx = this.canvas.getContext('2d')
-    if (!ctx) throw new Error('Canvas 2D is not supported')
-    this.ctx = ctx
-    ctx.fillStyle = background
-    ctx.fillRect(0, 0, width, height)
+    const layer = this.createLayer(name)
+    if (background) {
+      layer.ctx.fillStyle = background
+      layer.ctx.fillRect(0, 0, width, height)
+    }
+    this.layers = [layer]
+  }
+
+  get active(): Layer {
+    return this.layers[this.activeIndex]!
+  }
+
+  /** A new transparent layer of the document's size, not yet in the stack. */
+  createLayer(name: string): Layer {
+    const { canvas, ctx } = makeCanvas(this.width, this.height)
+    return { id: this.nextId++, name, visible: true, opacity: 1, canvas, ctx }
+  }
+
+  indexOf(id: number): number {
+    return this.layers.findIndex((l) => l.id === id)
+  }
+
+  structure(): Structure {
+    return {
+      layers: this.layers.map((layer) => ({
+        layer,
+        name: layer.name,
+        visible: layer.visible,
+        opacity: layer.opacity,
+      })),
+      activeId: this.active.id,
+    }
+  }
+
+  setStructure(s: Structure): void {
+    this.layers = s.layers.map(({ layer, name, visible, opacity }) => {
+      layer.name = name
+      layer.visible = visible
+      layer.opacity = opacity
+      return layer
+    })
+    this.activeIndex = Math.max(0, this.indexOf(s.activeId))
+  }
+
+  insert(layer: Layer, index: number): void {
+    this.layers.splice(index, 0, layer)
+    this.activeIndex = index
+  }
+
+  remove(index: number): void {
+    this.layers.splice(index, 1)
+    this.activeIndex = Math.min(this.activeIndex, this.layers.length - 1)
+  }
+
+  move(from: number, to: number): void {
+    const active = this.active
+    this.layers = moveItem(this.layers, from, to)
+    this.activeIndex = this.layers.indexOf(active)
   }
 
   /**
-   * Gives the canvas a new size. Resizing clears a canvas, so `redraw`
-   * gets a copy of the old picture to put back however it likes.
+   * Gives every layer a new size. Resizing clears a canvas, so `redraw` gets
+   * a copy of each old layer to put back however it likes.
    */
   resize(
     width: number,
     height: number,
-    redraw: (ctx: CanvasRenderingContext2D, old: HTMLCanvasElement) => void,
+    redraw: (ctx: CanvasRenderingContext2D, old: HTMLCanvasElement, index: number) => void,
   ): void {
-    const old = document.createElement('canvas')
-    old.width = this.width
-    old.height = this.height
-    old.getContext('2d')!.drawImage(this.canvas, 0, 0)
-
-    this.canvas.width = width
-    this.canvas.height = height
+    const olds = this.layers.map((layer) => {
+      const { canvas, ctx } = makeCanvas(this.width, this.height)
+      ctx.drawImage(layer.canvas, 0, 0)
+      return canvas
+    })
     this.width = width
     this.height = height
-    redraw(this.ctx, old)
+    this.layers.forEach((layer, i) => {
+      layer.canvas.width = width
+      layer.canvas.height = height
+      redraw(layer.ctx, olds[i]!, i)
+    })
   }
 
-  /** Replaces the whole image, size included. */
-  replace(image: ImageData): void {
-    this.canvas.width = image.width
-    this.canvas.height = image.height
-    this.width = image.width
-    this.height = image.height
-    this.ctx.putImageData(image, 0, 0)
+  /** Draws the visible layers, bottom first, with their opacity. */
+  drawComposite(ctx: CanvasRenderingContext2D): void {
+    for (const layer of this.layers) {
+      if (!layer.visible || layer.opacity <= 0) continue
+      ctx.globalAlpha = layer.opacity
+      ctx.drawImage(layer.canvas, 0, 0)
+    }
+    ctx.globalAlpha = 1
   }
 
-  read(rect: Rect): ImageData {
-    return this.ctx.getImageData(rect.x, rect.y, rect.width, rect.height)
-  }
-
-  write(image: ImageData, rect: Rect): void {
-    this.ctx.putImageData(image, rect.x, rect.y)
+  /** The picture as it looks: all visible layers flattened onto one canvas. */
+  composite(): HTMLCanvasElement {
+    const { canvas, ctx } = makeCanvas(this.width, this.height)
+    this.drawComposite(ctx)
+    return canvas
   }
 }

@@ -48,7 +48,12 @@ const fillFor = (bg: Background) =>
 async function create() {
   if (!valid.value) return
   await editor.commitText()
-  editor.engine.newImage(clampSide(width.value), clampSide(height.value), fillFor(background.value))
+  editor.engine.newImage(
+    clampSide(width.value),
+    clampSide(height.value),
+    fillFor(background.value),
+    t('layers.background'),
+  )
   editor.fileName = null
   view.fit()
   ui.newImageOpen = false

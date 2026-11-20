@@ -93,19 +93,29 @@ function paint() {
   // Smoothed when zoomed out; hard pixels when zoomed in, as in any pixel editor.
   ctx.imageSmoothingEnabled = zoom < 1
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(doc.canvas, sx, sy, ex - sx, ey - sy, dx, dy, dw, dh)
-
-  // Pixels being moved or pasted float above the image, clipped to it.
   const floating = editor.engine.floating
-  if (floating) {
-    ctx.save()
-    ctx.beginPath()
-    ctx.rect(x, y, doc.width * zoom, doc.height * zoom)
-    ctx.clip()
-    const { canvas: f } = floating
-    ctx.drawImage(f, x + floating.x * zoom, y + floating.y * zoom, f.width * zoom, f.height * zoom)
-    ctx.restore()
+  for (const layer of doc.layers) {
+    if (!layer.visible || layer.opacity <= 0) continue
+    ctx.globalAlpha = layer.opacity
+    ctx.drawImage(layer.canvas, sx, sy, ex - sx, ey - sy, dx, dy, dw, dh)
+    // Pixels being moved or pasted float right above their own layer.
+    if (floating?.layer === layer) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(x, y, doc.width * zoom, doc.height * zoom)
+      ctx.clip()
+      const { canvas: f } = floating
+      ctx.drawImage(
+        f,
+        x + floating.x * zoom,
+        y + floating.y * zoom,
+        f.width * zoom,
+        f.height * zoom,
+      )
+      ctx.restore()
+    }
   }
+  ctx.globalAlpha = 1
 
   if (zoom >= PIXEL_GRID_ZOOM) drawPixelGrid(ctx, dpr, zoom, x, y, sx, sy, ex, ey)
 

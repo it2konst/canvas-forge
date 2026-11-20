@@ -40,7 +40,7 @@ const measure = useDebounceFn(async () => {
   const run = (current = Symbol())
   encoding.value = true
   try {
-    const blob = await encode(editor.engine.doc.canvas, format.value, quality.value / 100)
+    const blob = await encode(editor.engine.doc.composite(), format.value, quality.value / 100)
     if (run === current) estimate.value = blob.size
   } catch {
     estimate.value = null
@@ -65,7 +65,7 @@ async function save() {
   if (saving.value) return
   saving.value = true
   try {
-    const blob = await encode(editor.engine.doc.canvas, format.value, quality.value / 100)
+    const blob = await encode(editor.engine.doc.composite(), format.value, quality.value / 100)
     download(blob, fileName.value)
     editor.fileName = sanitizeName(name.value) || null
     ui.saveOpen = false

@@ -35,7 +35,7 @@ export function useImageFiles() {
     const loaded = await load(file)
     if (!loaded) return
     await editor.commitText()
-    if (editor.engine.openImage(loaded.picture, loaded.width, loaded.height)) {
+    if (editor.engine.openImage(loaded.picture, loaded.width, loaded.height, loaded.name)) {
       editor.fileName = loaded.name
       view.fit()
     }

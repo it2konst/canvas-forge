@@ -172,6 +172,9 @@ export default {
     copiedImage: 'Whole image copied.',
     noImage: 'There is no image in the clipboard. Copy one, then press Ctrl+V.',
   },
+  layers: {
+    background: 'Background',
+  },
   canvas: {
     label: 'Image',
   },
