@@ -42,7 +42,7 @@ export function useClipboard() {
   async function cut() {
     if (!editor.selection) return
     await copy()
-    editor.engine.deleteSelection(editor.secondaryColor)
+    editor.engine.deleteSelection(editor.holeFill())
   }
 
   /** Pastes what the app copied itself, when the system clipboard has no image of ours. */

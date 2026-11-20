@@ -4,8 +4,9 @@ import type { StrokeFactory } from './types'
 /**
  * Hard-edged square stamps along whole-pixel lines, without anti-aliasing:
  * the classic Paint pencil and eraser. Good for pixel art and clean edges.
+ * With `erase` the squares cut pixels away to transparency instead.
  */
-export const hardSquareStroke: StrokeFactory = (ctx, { color, size }) => {
+export const hardSquareStroke: StrokeFactory = (ctx, { color, size, erase }) => {
   const side = Math.max(1, Math.round(size))
   // Centre the square on the pixel under the cursor (left/top-biased for even sizes).
   const offset = Math.floor(side / 2)
@@ -20,9 +21,9 @@ export const hardSquareStroke: StrokeFactory = (ctx, { color, size }) => {
       if (last && last.x === x && last.y === y) return null
 
       const from = last ?? { x, y }
-      ctx.globalCompositeOperation = 'source-over'
+      ctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over'
       ctx.globalAlpha = 1
-      ctx.fillStyle = color
+      ctx.fillStyle = erase ? '#000' : color
       forEachLinePixel(from.x, from.y, x, y, stamp)
       last = { x, y }
 
@@ -32,6 +33,7 @@ export const hardSquareStroke: StrokeFactory = (ctx, { color, size }) => {
         width: Math.abs(x - from.x) + side,
         height: Math.abs(y - from.y) + side,
       }
+      ctx.globalCompositeOperation = 'source-over'
       return area
     },
     finish: () => null,

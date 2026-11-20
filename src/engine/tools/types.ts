@@ -6,6 +6,8 @@ export interface StrokeSettings {
   color: string
   /** Tool size in image pixels. */
   size: number
+  /** Remove pixels (make them transparent) instead of painting `color`. */
+  erase?: boolean
 }
 
 /** One stroke in progress. Each call returns the area it painted, or null. */

@@ -7,11 +7,14 @@ import { useViewStore } from '@/stores/view'
 import { screenToImage } from '@/engine/view'
 import { strokeFactoryFor } from '@/tools/painters'
 import { rectFromPoints } from '@/engine/selection'
+import { useNotificationsStore } from '@/stores/notifications'
+import { i18n } from '@/i18n'
 
 /** Connects pointer input on the visible canvas to the engine. */
 export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) {
   const editor = useEditorStore()
   const view = useViewStore()
+  const notifications = useNotificationsStore()
   let detach: (() => void) | undefined
 
   /** While the colour picker is held down: the image to sample and the button. */
@@ -22,16 +25,24 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
     { mode: 'area'; start: Point } | { mode: 'move'; offsetX: number; offsetY: number } | null =
     null
 
+  /** Painting on a hidden layer would change nothing visible: say so instead. */
+  function blockedByHiddenLayer(): boolean {
+    if (!editor.activeHidden()) return false
+    notifications.notify(i18n.global.t('layers.hiddenWarning'))
+    return true
+  }
+
   function beginSelect(point: Point & { ctrl?: boolean }) {
     const { engine } = editor
     const p = { x: Math.floor(point.x), y: Math.floor(point.y) }
     if (engine.isInSelection(p)) {
+      if (blockedByHiddenLayer()) return
       if (point.ctrl) {
         // Ctrl + drag copies: put down what floats (a stamp) and lift a copy.
         engine.settle()
         engine.lift(null)
       } else if (!engine.floating) {
-        engine.lift(editor.secondaryColor)
+        engine.lift(editor.holeFill())
       }
       const sel = engine.selection!
       selecting = { mode: 'move', offsetX: p.x - sel.x, offsetY: p.y - sel.y }
@@ -87,6 +98,8 @@ export function useCanvasInput(canvas: Readonly<Ref<HTMLCanvasElement | null>>) 
             pick(point)
             return
           }
+          const paints = !['picker', 'hand', 'select'].includes(editor.activeTool)
+          if (paints && blockedByHiddenLayer()) return
           if (editor.activeTool === 'text') {
             // A click outside the open text box finishes it, like in Paint.
             if (editor.textDraft) void editor.commitText()

@@ -62,6 +62,8 @@ export default {
     textField: 'Текст',
     textHint:
       'Кликните по изображению и печатайте. Enter переносит строку; Ctrl+Enter или клик мимо переносит текст на изображение, Esc отменяет.',
+    eraserHint:
+      'На фоновом слое ластик рисует цветом 2, как в Paint; на остальных слоях стирает до прозрачности.',
     shapeStyle: 'Стиль',
     style: {
       outline: 'Контур',
@@ -176,6 +178,7 @@ export default {
   },
   layers: {
     background: 'Фон',
+    hiddenWarning: 'Активный слой скрыт. Покажите его, чтобы рисовать на нём.',
     numbered: 'Слой {n}',
     copyOf: '{name}, копия',
     actions: 'Действия со слоями',

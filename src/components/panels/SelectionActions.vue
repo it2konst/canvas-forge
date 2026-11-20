@@ -39,7 +39,7 @@ const actions = computed(() => [
     id: 'delete',
     icon: iconDelete,
     keys: 'Delete',
-    run: () => editor.engine.deleteSelection(editor.secondaryColor),
+    run: () => editor.engine.deleteSelection(editor.holeFill()),
     off: !has.value,
   },
 ])

@@ -61,6 +61,8 @@ export default {
     textField: 'Text',
     textHint:
       'Click the image and type. Enter starts a new line; Ctrl+Enter or a click outside puts the text on the image, Esc discards it.',
+    eraserHint:
+      'On the background layer the eraser paints with color 2, like in Paint; on other layers it erases to transparency.',
     shapeStyle: 'Style',
     style: {
       outline: 'Outline',
@@ -174,6 +176,7 @@ export default {
   },
   layers: {
     background: 'Background',
+    hiddenWarning: 'The active layer is hidden. Show it to draw on it.',
     numbered: 'Layer {n}',
     copyOf: '{name} copy',
     actions: 'Layer actions',

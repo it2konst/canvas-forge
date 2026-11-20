@@ -26,7 +26,8 @@ export type ToolId =
   | 'ellipse'
 
 /** Settings shown in the properties panel while the tool is active. */
-export type ToolOption = 'size' | 'shapeStyle' | 'tolerance' | 'font' | 'pickerHint' | 'selection'
+export type ToolOption =
+  'size' | 'shapeStyle' | 'tolerance' | 'font' | 'pickerHint' | 'selection' | 'eraserHint'
 
 export interface ToolDefinition {
   id: ToolId
@@ -45,7 +46,7 @@ export const TOOL_GROUPS: readonly (readonly ToolDefinition[])[] = [
   [
     { id: 'pencil', icon: iconPencil, shortcut: 'P', options: ['size'] },
     { id: 'brush', icon: iconBrush, shortcut: 'B', options: ['size'] },
-    { id: 'eraser', icon: iconEraser, shortcut: 'E', options: ['size'] },
+    { id: 'eraser', icon: iconEraser, shortcut: 'E', options: ['size', 'eraserHint'] },
     { id: 'fill', icon: iconFill, shortcut: 'G', options: ['tolerance'] },
     { id: 'picker', icon: iconPicker, shortcut: 'I', options: ['pickerHint'] },
     { id: 'text', icon: iconText, shortcut: 'T', options: ['font'] },

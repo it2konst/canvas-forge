@@ -125,6 +125,15 @@ export const useEditorStore = defineStore('editor', () => {
   const duplicateLayer = () =>
     engine.duplicateLayer(t('layers.copyOf', { name: engine.doc.active.name }))
 
+  /**
+   * What fills the gap when pixels are moved, cut or deleted: colour 2 on
+   * the background layer, like in Paint; transparency on layers above it.
+   */
+  const holeFill = () => (activeLayer.value === 0 ? secondaryColor.value : 'transparent')
+
+  /** The active layer is hidden: painting on it would be invisible. */
+  const activeHidden = () => layers.value[activeLayer.value]?.visible === false
+
   const undo = () => engine.undo()
   const redo = () => engine.redo()
 
@@ -143,6 +152,8 @@ export const useEditorStore = defineStore('editor', () => {
     return {
       color,
       size: brushSize.value,
+      // Above the background the eraser removes pixels instead of painting colour 2.
+      erase: activeTool.value === 'eraser' && activeLayer.value > 0,
       style: shapeStyle.value,
       // A filled shape uses the stroke colour; outline + fill fills with the other one.
       fillColor: shapeStyle.value === 'both' ? other : color,
@@ -220,6 +231,8 @@ export const useEditorStore = defineStore('editor', () => {
     canAddLayer,
     addLayer,
     duplicateLayer,
+    holeFill,
+    activeHidden,
     undo,
     redo,
     pointer,

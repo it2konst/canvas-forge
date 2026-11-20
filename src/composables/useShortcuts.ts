@@ -60,7 +60,7 @@ export function useShortcuts() {
     }
     if ((code === 'Delete' || code === 'Backspace') && editor.selection) {
       event.preventDefault()
-      editor.engine.deleteSelection(editor.secondaryColor)
+      editor.engine.deleteSelection(editor.holeFill())
       return
     }
     // Arrow keys nudge the selected pixels by 1 px, or 10 px with Shift.
@@ -68,7 +68,7 @@ export function useShortcuts() {
     if (nudge && editor.selection && editor.activeTool === 'select' && !mod) {
       event.preventDefault()
       const step = event.shiftKey ? 10 : 1
-      if (!editor.floating) editor.engine.lift(editor.secondaryColor)
+      if (!editor.floating) editor.engine.lift(editor.holeFill())
       const sel = editor.engine.selection!
       editor.engine.moveFloating(sel.x + nudge[0] * step, sel.y + nudge[1] * step)
       return
