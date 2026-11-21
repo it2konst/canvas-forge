@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "canvas-forge",
+  "short_name": "canvas-forge",
+  "description": "A Paint-style image editor that runs entirely in the browser. Your images stay on your device.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#F9F9F8",
+  "background_color": "#EEEEEC",
+  "categories": ["graphics", "productivity", "utilities"],
+  "icons": [
+    { "src": "/icons/pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
