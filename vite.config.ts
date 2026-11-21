@@ -20,6 +20,8 @@ export default defineConfig({
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        // Only link previews use it; no need to store it on every device.
+        globIgnores: ['og-image.png'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         // The first visit is controlled at once, so later updates can take over cleanly.
