@@ -12,6 +12,7 @@ import NewImageDialog from '@/components/dialogs/NewImageDialog.vue'
 import SaveDialog from '@/components/dialogs/SaveDialog.vue'
 import AppNotice from '@/components/feedback/AppNotice.vue'
 import DropOverlay from '@/components/feedback/DropOverlay.vue'
+import UpdatePrompt from '@/components/feedback/UpdatePrompt.vue'
 import { useFileDropAndPaste } from '@/composables/useFileDropAndPaste'
 import { useAutosave } from '@/composables/useAutosave'
 
@@ -39,6 +40,7 @@ useAutosave()
     <SaveDialog />
     <AppNotice />
     <DropOverlay :active="dragging" />
+    <UpdatePrompt />
   </v-app>
 </template>
 

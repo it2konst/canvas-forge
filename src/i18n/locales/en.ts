@@ -193,6 +193,13 @@ export default {
     opacity: 'Opacity',
     limit: 'At most {max} layers',
   },
+  pwa: {
+    offlineReady: 'canvas-forge is ready to work offline.',
+    updateTitle: 'A new version is ready',
+    updateHint: 'Your image is kept. Update when it suits you.',
+    update: 'Update',
+    later: 'Later',
+  },
   canvas: {
     label: 'Image',
   },

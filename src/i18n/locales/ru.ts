@@ -195,6 +195,13 @@ export default {
     opacity: 'Непрозрачность',
     limit: 'Не больше {max} слоёв',
   },
+  pwa: {
+    offlineReady: 'canvas-forge готов к работе офлайн.',
+    updateTitle: 'Доступна новая версия',
+    updateHint: 'Изображение сохранится. Обновите, когда будет удобно.',
+    update: 'Обновить',
+    later: 'Позже',
+  },
   canvas: {
     label: 'Изображение',
   },

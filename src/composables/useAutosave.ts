@@ -7,6 +7,10 @@ import { useEditorStore } from '@/stores/editor'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useViewStore } from '@/stores/view'
 
+/** Writes pending changes now; set while the editor is mounted. */
+let flushNow: () => Promise<void> = async () => {}
+export const flushAutosave = () => flushNow()
+
 /** Quiet time after the last change before the image is written. */
 const DELAY_MS = 1500
 
@@ -58,6 +62,7 @@ export function useAutosave() {
   }
 
   const later = useDebounceFn(save, DELAY_MS)
+  flushNow = save
 
   editor.engine.onHistoryChange(() => {
     dirty = true

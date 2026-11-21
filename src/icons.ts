@@ -48,5 +48,6 @@ export {
   mdiTrayArrowDown as iconSave,
   mdiTuneVariant as iconProperties,
   mdiUndo as iconUndo,
+  mdiUpdate as iconUpdate,
   mdiVectorLine as iconLine,
 } from '@mdi/js'
