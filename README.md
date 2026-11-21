@@ -12,11 +12,9 @@ Written from scratch with Vue 3 and TypeScript.
 
 ![canvas-forge in light and dark themes](docs/screenshots/overview.png)
 
-> **Work in progress.** All eleven tools work, along with selection and the clipboard, zoom, image size, files and undo for everything. Layers work too. Offline use and installing as an app are the last stage of the [roadmap](#roadmap).
+> Every step of the [roadmap](#roadmap) is done: eleven tools, layers, selection and the clipboard, zoom, files, undo for everything, and an installable app that works offline. Ideas and bug reports are welcome.
 
 ## Features
-
-**Ready**
 
 - Pencil: hard-edged square pixels with no anti-aliasing, good for pixel art
 - Brush: round and anti-aliased, smoothed with curves so fast strokes have no corners; pen pressure sets the width
@@ -56,16 +54,17 @@ Written from scratch with Vue 3 and TypeScript.
 - English and Russian interface; the browser language is picked on the first visit
 - Responsive layout down to phone width: on narrow screens the properties panel becomes a drawer
 - Strict Content-Security-Policy on deploy
-
-**Planned**
-
-- Offline support and install as an app (PWA)
+- Works offline after the first visit: the whole app, fonts included, is cached by a service worker
+- Installable as a standalone app (Chrome, Edge, Android, Safari on iOS and macOS); once installed it shows up under "Open with" for images in Chrome and Edge on desktop
+- A new version is never forced on you: the app offers "Update" and reloads only when you agree, after saving your image
+- Link preview: a shared link unfolds into a card in messengers and on social sites
 
 ## Privacy and security
 
 - Everything happens in the browser: no server, no accounts, no analytics, no cookies.
 - Theme, language, colors and tool settings are kept in `localStorage`, the current image (every layer) in IndexedDB; both stay on your device.
 - Opened files are decoded locally; SVG files are rasterised through `<img>`, so scripts inside them never run.
+- The service worker stores only the app itself, never your images.
 - `v-html` is forbidden by the lint config, so user content is never injected as raw HTML.
 - The deployed site sends a strict CSP: scripts, fonts and connections are limited to its own origin.
 
@@ -82,6 +81,7 @@ Written from scratch with Vue 3 and TypeScript.
 | Drawing   | Canvas 2D, Pointer Events with pen pressure           |
 | Quality   | ESLint (flat config), Prettier, vue-tsc               |
 | Tests     | Vitest, GitHub Actions CI                             |
+| Offline   | vite-plugin-pwa (Workbox), Web App Manifest           |
 | Packages  | pnpm                                                  |
 | Hosting   | Vercel                                                |
 
@@ -123,6 +123,7 @@ Unit tests run with Vitest in Node and on every push in GitHub Actions. The draw
 - files: which files count as images, refusing huge or foreign files before decoding, scaling down oversized images, safe file names, sizes in each language
 - selection: rectangles in every drag direction, clipping, hit testing, where pastes land; checks for settings read back from storage
 - layers: reordering, which layer becomes active after a delete, numbered names, opacity, erasing to transparency, upgrading older autosaves
+- the PWA setup: install requirements and icons in the manifest, file handlers matching what the editor opens, a complete link preview
 
 ## Keyboard shortcuts
 
@@ -168,9 +169,9 @@ src/
     layout/      header, tool rail, canvas area, status bar, theme and language menus
     panels/      properties panel and its sections (colors, tool options, selection, layers)
     dialogs/     image size, new image, save
-    feedback/    notifications, drop overlay
+    feedback/    notifications, drop overlay, update prompt
   composables/   theme and language sync, canvas input, wheel, panning, pinch, shortcuts,
-                 opening, drop and paste, autosave
+                 opening, drop and paste, autosave, updates, "Open with"
   engine/        drawing engine in plain TypeScript: document, input, history, flood fill,
                  colors, view math, resizing, selection, layers
     tools/       pencil and eraser (hard square), brush (round, pressure), shapes, text
@@ -192,7 +193,7 @@ src/
 5. ~~Files: open, paste, drag and drop, save as PNG / JPEG / WebP, autosave~~ ✓
 6. ~~Selection: move, copy, cut, paste, crop~~ ✓
 7. ~~Layers~~ ✓
-8. PWA: offline, install, open images with the app
+8. ~~PWA: offline, install, open images with the app, link preview~~ ✓
 
 ## Author
 
