@@ -15,12 +15,14 @@ import DropOverlay from '@/components/feedback/DropOverlay.vue'
 import UpdatePrompt from '@/components/feedback/UpdatePrompt.vue'
 import { useFileDropAndPaste } from '@/composables/useFileDropAndPaste'
 import { useAutosave } from '@/composables/useAutosave'
+import { useLaunchQueue } from '@/composables/useLaunchQueue'
 
 useThemeSync()
 useLocaleSync()
 useShortcuts()
 const { dragging } = useFileDropAndPaste()
 useAutosave()
+useLaunchQueue()
 </script>
 
 <template>
